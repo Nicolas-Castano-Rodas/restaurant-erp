@@ -350,10 +350,8 @@ const roles = [
 // ============================================================
 
 const rolePermissions: Record<string, string[]> = {
-  // Owner has access to everything.
   Owner: ["*"],
 
-  // Administrator
   Administrator: [
     "organizations.read",
     "organizations.update",
@@ -421,7 +419,6 @@ const rolePermissions: Record<string, string[]> = {
     "reports.read",
   ],
 
-  // Manager
   Manager: [
     "organizations.read",
 
@@ -473,7 +470,6 @@ const rolePermissions: Record<string, string[]> = {
     "reports.read",
   ],
 
-  // Cashier
   Cashier: [
     "products.read",
     "categories.read",
@@ -492,7 +488,6 @@ const rolePermissions: Record<string, string[]> = {
     "tables.read",
   ],
 
-  // Kitchen
   Kitchen: [
     "products.read",
     "categories.read",
@@ -503,7 +498,6 @@ const rolePermissions: Record<string, string[]> = {
     "kitchen.update",
   ],
 
-  // Waiter
   Waiter: [
     "products.read",
     "categories.read",
@@ -521,7 +515,6 @@ const rolePermissions: Record<string, string[]> = {
     "kitchen.read",
   ],
 
-  // Driver
   Driver: [
     "orders.read",
     "orders.update",
@@ -529,7 +522,6 @@ const rolePermissions: Record<string, string[]> = {
     "customers.read",
   ],
 
-  // Inventory
   Inventory: [
     "products.read",
     "products.create",
@@ -553,7 +545,6 @@ const rolePermissions: Record<string, string[]> = {
     "purchases.cancel",
   ],
 
-  // Accountant
   Accountant: [
     "payments.read",
     "payments.refund",
@@ -567,6 +558,86 @@ const rolePermissions: Record<string, string[]> = {
     "reports.read",
   ],
 };
+
+// ============================================================
+// DEMO CATALOG
+// ============================================================
+
+const catalogCategories = [
+  {
+    name: "Arroces",
+    description: "Platos de arroz preparados al estilo del restaurante.",
+    products: [
+      {
+        name: "Arroz chino",
+        description: "Arroz chino tradicional con vegetales y proteína.",
+        sku: "ARROZ-001",
+        cost: 8000,
+        price: 15000,
+        variants: [
+          { name: "Pequeño", price: 12000 },
+          { name: "Mediano", price: 15000 },
+          { name: "Grande", price: 20000 },
+        ],
+      },
+      {
+        name: "Arroz especial",
+        description: "Arroz especial con combinación de carnes y vegetales.",
+        sku: "ARROZ-002",
+        cost: 10000,
+        price: 20000,
+        variants: [
+          { name: "Mediano", price: 20000 },
+          { name: "Grande", price: 26000 },
+        ],
+      },
+    ],
+  },
+  {
+    name: "Entradas",
+    description: "Entradas y acompañamientos.",
+    products: [
+      {
+        name: "Rollitos primavera",
+        description: "Rollitos rellenos de vegetales.",
+        sku: "ENT-001",
+        cost: 4000,
+        price: 8000,
+        variants: [],
+      },
+      {
+        name: "Wontons",
+        description: "Wontons preparados al estilo tradicional.",
+        sku: "ENT-002",
+        cost: 5000,
+        price: 10000,
+        variants: [],
+      },
+    ],
+  },
+  {
+    name: "Bebidas",
+    description: "Bebidas frías y calientes.",
+    products: [
+      {
+        name: "Coca-Cola",
+        description: "Bebida gaseosa.",
+        sku: "BEB-001",
+        cost: 2500,
+        price: 5000,
+        variants: [],
+      },
+      {
+        name: "Agua",
+        description: "Agua embotellada.",
+        sku: "BEB-002",
+        cost: 1500,
+        price: 3000,
+        variants: [],
+      },
+    ],
+  },
+];
 
 // ============================================================
 // MAIN
@@ -753,6 +824,108 @@ async function main() {
   });
 
   console.log(`👤 Owner user ready: ${ownerUser.email}`);
+
+  // ----------------------------------------------------------
+  // 7. DEMO CATALOG
+  // ----------------------------------------------------------
+
+  for (const categoryData of catalogCategories) {
+    const category = await prisma.category.upsert({
+      where: {
+        organizationId_name: {
+          organizationId: organization.id,
+          name: categoryData.name,
+        },
+      },
+      update: {
+        description: categoryData.description,
+        active: true,
+      },
+      create: {
+        name: categoryData.name,
+        description: categoryData.description,
+        organizationId: organization.id,
+        active: true,
+      },
+    });
+
+    console.log(`📂 Category ready: ${category.name}`);
+
+    for (const productData of categoryData.products) {
+      const existingProduct = productData.sku
+        ? await prisma.product.findFirst({
+            where: {
+              organizationId: organization.id,
+              sku: productData.sku,
+            },
+          })
+        : await prisma.product.findFirst({
+            where: {
+              organizationId: organization.id,
+              categoryId: category.id,
+              name: productData.name,
+            },
+          });
+
+      const product = existingProduct
+        ? await prisma.product.update({
+            where: {
+              id: existingProduct.id,
+            },
+            data: {
+              name: productData.name,
+              description: productData.description,
+              sku: productData.sku,
+              cost: productData.cost,
+              price: productData.price,
+              active: true,
+              available: true,
+              categoryId: category.id,
+              organizationId: organization.id,
+            },
+          })
+        : await prisma.product.create({
+            data: {
+              name: productData.name,
+              description: productData.description,
+              sku: productData.sku,
+              cost: productData.cost,
+              price: productData.price,
+              active: true,
+              available: true,
+              organizationId: organization.id,
+              categoryId: category.id,
+            },
+          });
+
+      console.log(`   🍽️ Product ready: ${product.name}`);
+
+      for (const variantData of productData.variants) {
+        await prisma.productVariant.upsert({
+          where: {
+            productId_name: {
+              productId: product.id,
+              name: variantData.name,
+            },
+          },
+          update: {
+            price: variantData.price,
+            active: true,
+          },
+          create: {
+            productId: product.id,
+            name: variantData.name,
+            price: variantData.price,
+            active: true,
+          },
+        });
+
+        console.log(`      ↳ Variant ready: ${variantData.name}`);
+      }
+    }
+  }
+
+  console.log("🍽️ Demo catalog configured successfully.");
 
   // ----------------------------------------------------------
   // FINISH
