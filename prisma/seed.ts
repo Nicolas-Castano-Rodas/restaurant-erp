@@ -421,11 +421,8 @@ const rolePermissions: Record<string, string[]> = {
 
   Manager: [
     "organizations.read",
-
     "branches.read",
-
     "users.read",
-
     "roles.read",
 
     "products.read",
@@ -491,9 +488,7 @@ const rolePermissions: Record<string, string[]> = {
   Kitchen: [
     "products.read",
     "categories.read",
-
     "orders.read",
-
     "kitchen.read",
     "kitchen.update",
   ],
@@ -515,12 +510,7 @@ const rolePermissions: Record<string, string[]> = {
     "kitchen.read",
   ],
 
-  Driver: [
-    "orders.read",
-    "orders.update",
-
-    "customers.read",
-  ],
+  Driver: ["orders.read", "orders.update", "customers.read"],
 
   Inventory: [
     "products.read",
@@ -548,13 +538,9 @@ const rolePermissions: Record<string, string[]> = {
   Accountant: [
     "payments.read",
     "payments.refund",
-
     "purchases.read",
-
     "suppliers.read",
-
     "customers.read",
-
     "reports.read",
   ],
 };
@@ -634,6 +620,143 @@ const catalogCategories = [
         cost: 1500,
         price: 3000,
         variants: [],
+      },
+    ],
+  },
+];
+
+// ============================================================
+// DEMO CUSTOMERS
+// ============================================================
+
+const demoCustomers = [
+  {
+    name: "Carlos Pérez",
+    phone: "3001234567",
+    email: "carlos@example.com",
+    address: "Carrera 45 #10-25",
+    notes: "Cliente frecuente",
+  },
+  {
+    name: "María Gómez",
+    phone: "3019876543",
+    email: "maria@example.com",
+    address: "Calle 20 #40-15",
+    notes: "Entrega en recepción",
+  },
+];
+
+// ============================================================
+// DEMO TABLES
+// ============================================================
+
+const demoTables = [
+  {
+    name: "Mesa 1",
+    number: 1,
+    capacity: 4,
+    status: "OCCUPIED" as const,
+  },
+  {
+    name: "Mesa 2",
+    number: 2,
+    capacity: 2,
+    status: "AVAILABLE" as const,
+  },
+  {
+    name: "Mesa 3",
+    number: 3,
+    capacity: 6,
+    status: "AVAILABLE" as const,
+  },
+  {
+    name: "Mesa 4",
+    number: 4,
+    capacity: 4,
+    status: "AVAILABLE" as const,
+  },
+];
+
+// ============================================================
+// DEMO ORDERS
+// ============================================================
+
+const demoOrders = [
+  {
+    orderNumber: 1001,
+    type: "DINE_IN" as const,
+    status: "PREPARING" as const,
+    kitchenStatus: "PREPARING" as const,
+    customerKey: "carlos@example.com",
+    tableNumber: 1,
+    notes: "Pedido para consumir en el restaurante.",
+    items: [
+      {
+        productSku: "ARROZ-001",
+        variantName: "Grande",
+        quantity: 1,
+      },
+      {
+        productSku: "ENT-001",
+        variantName: null,
+        quantity: 2,
+      },
+      {
+        productSku: "BEB-001",
+        variantName: null,
+        quantity: 2,
+      },
+    ],
+  },
+  {
+    orderNumber: 1002,
+    type: "TAKEAWAY" as const,
+    status: "CONFIRMED" as const,
+    kitchenStatus: "PENDING" as const,
+    customerKey: "carlos@example.com",
+    tableNumber: null,
+    notes: "Pedido para recoger en el restaurante.",
+    items: [
+      {
+        productSku: "ARROZ-002",
+        variantName: "Mediano",
+        quantity: 1,
+      },
+      {
+        productSku: "ENT-002",
+        variantName: null,
+        quantity: 1,
+      },
+      {
+        productSku: "BEB-002",
+        variantName: null,
+        quantity: 2,
+      },
+    ],
+  },
+  {
+    orderNumber: 1003,
+    type: "DELIVERY" as const,
+    status: "PENDING" as const,
+    kitchenStatus: "PENDING" as const,
+    customerKey: "maria@example.com",
+    tableNumber: null,
+    notes: "Entregar en recepción.",
+    items: [
+      {
+        productSku: "ARROZ-001",
+        variantName: "Mediano",
+        quantity: 2,
+      },
+      {
+        productSku: "ENT-001",
+        variantName: null,
+        quantity: 1,
+      },
+      {
+        productSku: "BEB-001",
+        variantName: null,
+        quantity: 1,
       },
     ],
   },
@@ -926,6 +1049,236 @@ async function main() {
   }
 
   console.log("🍽️ Demo catalog configured successfully.");
+
+  // ----------------------------------------------------------
+  // 8. DEMO CUSTOMERS
+  // ----------------------------------------------------------
+
+  const customers = new Map<string, string>();
+
+  for (const customerData of demoCustomers) {
+    const customer = customerData.email
+      ? await prisma.customer.findFirst({
+          where: {
+            organizationId: organization.id,
+            email: customerData.email,
+          },
+        })
+      : null;
+
+    const savedCustomer = customer
+      ? await prisma.customer.update({
+          where: {
+            id: customer.id,
+          },
+          data: {
+            name: customerData.name,
+            phone: customerData.phone,
+            address: customerData.address,
+            notes: customerData.notes,
+          },
+        })
+      : await prisma.customer.create({
+          data: {
+            name: customerData.name,
+            phone: customerData.phone,
+            email: customerData.email,
+            address: customerData.address,
+            notes: customerData.notes,
+            organizationId: organization.id,
+          },
+        });
+
+    customers.set(customerData.email, savedCustomer.id);
+
+    console.log(`👤 Customer ready: ${savedCustomer.name}`);
+  }
+
+  // ----------------------------------------------------------
+  // 9. DEMO TABLES
+  // ----------------------------------------------------------
+
+  const tables = new Map<number, string>();
+
+  for (const tableData of demoTables) {
+    const table = await prisma.restaurantTable.upsert({
+      where: {
+        branchId_number: {
+          branchId: branch.id,
+          number: tableData.number,
+        },
+      },
+      update: {
+        name: tableData.name,
+        capacity: tableData.capacity,
+        status: tableData.status,
+        organizationId: organization.id,
+      },
+      create: {
+        name: tableData.name,
+        number: tableData.number,
+        capacity: tableData.capacity,
+        status: tableData.status,
+        organizationId: organization.id,
+        branchId: branch.id,
+      },
+    });
+
+    tables.set(tableData.number, table.id);
+
+    console.log(`🪑 Table ready: ${table.name}`);
+  }
+
+  // ----------------------------------------------------------
+  // 10. DEMO ORDERS
+  // ----------------------------------------------------------
+
+  for (const orderData of demoOrders) {
+    const customerId = orderData.customerKey
+      ? customers.get(orderData.customerKey)
+      : undefined;
+
+    if (orderData.customerKey && !customerId) {
+      throw new Error(
+        `Customer not found for order ${orderData.orderNumber}: ${orderData.customerKey}`,
+      );
+    }
+
+    const tableId = orderData.tableNumber
+      ? tables.get(orderData.tableNumber)
+      : undefined;
+
+    if (orderData.tableNumber && !tableId) {
+      throw new Error(
+        `Table not found for order ${orderData.orderNumber}: ${orderData.tableNumber}`,
+      );
+    }
+
+    let subtotal = 0;
+
+    const resolvedItems = [];
+
+    for (const itemData of orderData.items) {
+      const product = await prisma.product.findFirst({
+        where: {
+          organizationId: organization.id,
+          sku: itemData.productSku,
+        },
+        include: {
+          variants: true,
+        },
+      });
+
+      if (!product) {
+        throw new Error(`Product not found: ${itemData.productSku}`);
+      }
+
+      const variant = itemData.variantName
+        ? product.variants.find((item) => item.name === itemData.variantName)
+        : null;
+
+      if (itemData.variantName && !variant) {
+        throw new Error(
+          `Variant not found: ${itemData.productSku} - ${itemData.variantName}`,
+        );
+      }
+
+      const unitPrice = variant ? Number(variant.price) : Number(product.price);
+
+      const itemSubtotal = unitPrice * itemData.quantity;
+
+      subtotal += itemSubtotal;
+
+      resolvedItems.push({
+        productId: product.id,
+        variantId: variant?.id ?? null,
+        quantity: itemData.quantity,
+        unitPrice,
+        subtotal: itemSubtotal,
+      });
+    }
+
+    const discount = 0;
+    const tax = 0;
+    const deliveryFee = orderData.type === "DELIVERY" ? 5000 : 0;
+    const total = subtotal - discount + tax + deliveryFee;
+
+    const existingOrder = await prisma.order.findFirst({
+      where: {
+        branchId: branch.id,
+        orderNumber: orderData.orderNumber,
+      },
+    });
+
+    const order = existingOrder
+      ? await prisma.order.update({
+          where: {
+            id: existingOrder.id,
+          },
+          data: {
+            type: orderData.type,
+            status: orderData.status,
+            kitchenStatus: orderData.kitchenStatus,
+            subtotal,
+            discount,
+            tax,
+            deliveryFee,
+            total,
+            notes: orderData.notes,
+            organizationId: organization.id,
+            branchId: branch.id,
+            userId: ownerUser.id,
+            customerId: customerId ?? null,
+            tableId: tableId ?? null,
+          },
+        })
+      : await prisma.order.create({
+          data: {
+            orderNumber: orderData.orderNumber,
+            type: orderData.type,
+            status: orderData.status,
+            kitchenStatus: orderData.kitchenStatus,
+            subtotal,
+            discount,
+            tax,
+            deliveryFee,
+            total,
+            notes: orderData.notes,
+            organizationId: organization.id,
+            branchId: branch.id,
+            userId: ownerUser.id,
+            customerId: customerId ?? null,
+            tableId: tableId ?? null,
+          },
+        });
+
+    await prisma.orderItem.deleteMany({
+      where: {
+        orderId: order.id,
+      },
+    });
+
+    for (const item of resolvedItems) {
+      await prisma.orderItem.create({
+        data: {
+          orderId: order.id,
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          subtotal: item.subtotal,
+        },
+      });
+    }
+
+    console.log(
+      `🧾 Order #${order.orderNumber} ready: ${order.type} - $${total.toLocaleString(
+        "es-CO",
+      )}`,
+    );
+  }
+
+  console.log("🧾 Demo orders configured successfully.");
 
   // ----------------------------------------------------------
   // FINISH
