@@ -83,6 +83,10 @@ jobs:
         env:
           RUN_DB_TESTS: "true"
         run: npm run cash:test
+      - name: Inventory movement integration test
+        env:
+          RUN_DB_TESTS: "true"
+        run: npm run inventory:test
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
@@ -102,3 +106,4 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/orders)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/kitchen)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/cash)" = "307"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/inventory)" = "307"

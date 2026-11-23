@@ -21,6 +21,7 @@ model Organization {
   memberships Membership[]
   categories  Category[]
   products    Product[]
+  ingredients Ingredient[]
 }
 
 model Branch {
@@ -37,6 +38,7 @@ model Branch {
   tables         RestaurantTable[]
   orders         Order[]
   cashShifts     CashShift[]
+  inventoryBalances InventoryBalance[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, code])
@@ -102,6 +104,7 @@ model Membership {
   closedShifts   CashShift[] @relation("ShiftClosedBy")
   payments       Payment[]
   closedOrders   Order[] @relation("OrderClosedBy")
+  stockMovements StockMovement[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, userId])
@@ -343,4 +346,67 @@ model Payment {
 
   @@unique([organizationId, branchId, orderId])
   @@index([organizationId, branchId, shiftId])
+}
+
+enum IngredientUnit {
+  KG
+  G
+  L
+  ML
+  UNIT
+}
+
+enum StockMovementKind {
+  ENTRY
+  EXIT
+  WASTE
+}
+
+model Ingredient {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  name           String
+  unit           IngredientUnit
+  active         Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  balances       InventoryBalance[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, name])
+}
+
+model InventoryBalance {
+  organizationId String @db.Uuid
+  branchId       String @db.Uuid
+  ingredientId   String @db.Uuid
+  quantity       Decimal @default(0) @db.Decimal(16, 3)
+  minimum        Decimal @default(0) @db.Decimal(16, 3)
+  updatedAt      DateTime @updatedAt
+  branch         Branch @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
+  ingredient     Ingredient @relation(fields: [organizationId, ingredientId], references: [organizationId, id], onDelete: Restrict)
+  movements      StockMovement[]
+
+  @@id([organizationId, branchId, ingredientId])
+}
+
+model StockMovement {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  branchId       String @db.Uuid
+  ingredientId   String @db.Uuid
+  membershipId   String @db.Uuid
+  requestId      String @db.Uuid
+  kind           StockMovementKind
+  quantity       Decimal @db.Decimal(16, 3)
+  balanceAfter   Decimal @db.Decimal(16, 3)
+  reason         String
+  createdAt      DateTime @default(now())
+  balance        InventoryBalance @relation(fields: [organizationId, branchId, ingredientId], references: [organizationId, branchId, ingredientId], onDelete: Restrict)
+  membership     Membership @relation(fields: [organizationId, membershipId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, branchId, requestId])
+  @@index([organizationId, branchId, createdAt])
+  @@index([organizationId, branchId, ingredientId])
 }

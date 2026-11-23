@@ -29,7 +29,8 @@
     "orders:test": "tsx tests/integration/orders.ts",
     "dev:clean": "node scripts/clean-next.mjs && npm run dev",
     "kitchen:test": "tsx tests/integration/kitchen.ts",
-    "cash:test": "tsx tests/integration/cash.ts"
+    "cash:test": "tsx tests/integration/cash.ts",
+    "inventory:test": "tsx tests/integration/inventory.ts"
   },
   "dependencies": {
     "next": "16.4.6",

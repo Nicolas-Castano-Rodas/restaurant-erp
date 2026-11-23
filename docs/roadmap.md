@@ -7,8 +7,8 @@
 | 2 | PostgreSQL, Prisma y modelo multiempresa | Migración y prueba de integridad superadas |
 | 3 | Autenticación, permisos y diseño visual | Acceso y dashboard validados; recuperación pendiente |
 | 4 | Catálogo, mesas y POS | Catálogo, mesas y POS inicial validados; selector visual actualizado; impuestos y descuentos pendientes |
-| 5 | Cocina, pagos y caja | Cocina validada; caja y pagos completos publicados, CI pendiente; devoluciones pendientes |
-| 6 | Inventario, recetas y compras | Pendiente |
+| 5 | Cocina, pagos y caja | Cocina, caja y pagos iniciales validados; devoluciones pendientes |
+| 6 | Inventario, recetas y compras | Inventario manual publicado; CI, recetas y compras pendientes |
 | 7 | Clientes, domicilios y analítica | Pendiente |
 | 8 | Auditoría, pruebas, accesibilidad y rendimiento | Pendiente |
 | 9 | Despliegue, demo y materiales de lanzamiento | Pendiente |
