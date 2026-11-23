@@ -54,6 +54,8 @@ jobs:
           path: package-lock.json
           if-no-files-found: error
           retention-days: 7
+      - name: Generate client without database credentials
+        run: env -u DATABASE_URL npm run db:generate
       - run: npm run db:validate
       - run: npm run db:generate
       - run: npm run db:deploy

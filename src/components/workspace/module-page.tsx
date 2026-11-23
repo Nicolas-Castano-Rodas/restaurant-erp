@@ -19,7 +19,7 @@ export function FormFeedback({ error, saved }: { error?: string; saved?: string 
   return (
     <>
       {error && <p role="alert" className="mb-5 rounded-lg bg-danger-soft p-4 text-sm text-danger">No se pudo guardar. Revisa los datos, nombres duplicados y tu acceso.</p>}
-      {saved && <p role="status" className="mb-5 rounded-lg bg-success-soft p-4 text-sm text-success">Cambios guardados correctamente.</p>}
+      {saved && <output className="mb-5 block rounded-lg bg-success-soft p-4 text-sm text-success">Cambios guardados correctamente.</output>}
     </>
   );
 }

@@ -6,6 +6,10 @@
     "node": ">=24 <25"
   },
   "scripts": {
+    "postinstall": "prisma generate",
+    "predev": "prisma generate",
+    "prebuild": "prisma generate",
+    "pretypecheck": "prisma generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
