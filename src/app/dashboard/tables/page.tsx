@@ -46,7 +46,7 @@ export default async function TablesPage({ searchParams }: { searchParams: Promi
           <details key={table.id} className="reference-card reference-disclosure group">
             <summary className="relative flex min-h-48 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl p-4 text-center">
               <span className="absolute right-3 top-3 text-muted"><span className="sr-only">Editar {table.name}</span><EditIcon /></span>
-              <TableIcon name={table.name} capacity={table.capacity} active={table.active} />
+              <TableIcon name={table.name} capacity={table.capacity} active={table.active} occupied={table.occupied} />
               <span className="text-base font-bold">{table.name}</span>
               <span className="text-sm text-muted">{table.capacity} personas</span>
               <span className={table.occupied ? "rounded-lg bg-warning-soft px-2 py-1 text-xs text-warning" : table.active ? "rounded-lg bg-success-soft px-2 py-1 text-xs text-success" : "rounded-lg bg-neutral-soft px-2 py-1 text-xs text-neutral-status"}>{table.occupied ? "Ocupada" : table.active ? "Disponible" : "Inactiva"}</span>

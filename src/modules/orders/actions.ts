@@ -1,11 +1,12 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/prisma";
 import { requireWorkspace } from "@/modules/auth/workspace";
 import { createOrder, OrderError, parseOrderInput } from "./service";
 
-export async function submitOrder(scope: string, payload: unknown): Promise<{ id: string } | { error: string }> {
+export async function submitOrder(scope: string, payload: unknown): Promise<{ id: string; nextRequestId: string } | { error: string }> {
   const context = await requireWorkspace("orders.manage");
   if (scope !== `${context.organization.id}:${context.branch.id}`) return { error: "Cambió tu sucursal. Actualiza el punto de venta." };
   try {
@@ -14,7 +15,7 @@ export async function submitOrder(scope: string, payload: unknown): Promise<{ id
     revalidatePath("/dashboard/pos");
     revalidatePath("/dashboard/tables");
     revalidatePath("/dashboard/orders");
-    return { id };
+    return { id, nextRequestId: randomUUID() };
   } catch (error) {
     return { error: error instanceof OrderError ? error.message : "No se pudo registrar el pedido. Intenta nuevamente." };
   }

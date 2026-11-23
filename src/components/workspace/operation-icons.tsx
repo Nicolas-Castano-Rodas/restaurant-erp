@@ -27,7 +27,7 @@ const upperRight = [53, 14];
 const lowerLeft = [23, 66];
 const lowerRight = [53, 66];
 
-export function TableIcon({ name, capacity, active }: { name: string; capacity: number; active: boolean }) {
+export function TableIcon({ name, capacity, active, occupied = false }: { name: string; capacity: number; active: boolean; occupied?: boolean }) {
   const seats = capacity <= 1 ? [top] :
     capacity === 2 ? [left, right] :
     capacity === 3 ? [top, left, right] :
@@ -37,14 +37,14 @@ export function TableIcon({ name, capacity, active }: { name: string; capacity: 
     capacity === 7 ? [upperLeft, top, upperRight, left, right, lowerLeft, lowerRight] :
     [upperLeft, upperRight, [7, 29], [7, 51], [69, 29], [69, 51], lowerLeft, lowerRight];
   const label = name.match(/\d+$/)?.[0]?.slice(-4).padStart(2, "0") ?? name.slice(0, 2).toUpperCase();
-  const chair = active ? "#0F766E" : "#94A3B8";
+  const chair = occupied ? "#92400E" : active ? "#0F766E" : "#94A3B8";
   return (
     <svg viewBox="0 0 76 80" width="76" height="80" aria-hidden="true" className="block shrink-0">
       <title>Representación de mesa</title>
       {seats.map(([x, y]) => (
         <rect key={`${x}:${y}`} x={x - 4.5} y={y - 4.5} width="9" height="9" rx="2.3" fill={chair} />
       ))}
-      <rect x="17" y="23" width="42" height="34" rx="8" fill={active ? "#CCFBF1" : "#E2E8F0"} stroke={chair} strokeWidth="1.25" />
+      <rect x="17" y="23" width="42" height="34" rx="8" fill={occupied ? "#FEF3C7" : active ? "#CCFBF1" : "#E2E8F0"} stroke={chair} strokeWidth="1.25" />
       <text x="38" y="44" textAnchor="middle" fontSize={label.length > 2 ? "11" : "15"} fontWeight="700" fill="#172B4D">{label}</text>
     </svg>
   );

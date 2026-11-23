@@ -22,7 +22,7 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
   const [cart, setCart] = useState<CartLine[]>([]);
   const [note, setNote] = useState("");
   const [requestId, setRequestId] = useState(initialRequestId);
-  const [result, setResult] = useState<{ id: string } | { error: string } | null>(null);
+  const [result, setResult] = useState<{ id: string; nextRequestId: string } | { error: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const categories = [...new Set(products.map((p) => p.category))];
   const filtered = products.filter((p) => (!category || p.category === category) && `${p.name} ${p.description ?? ""}`.toLowerCase().includes(search.toLowerCase().trim()));
@@ -49,7 +49,7 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
           setCart([]);
           setNote("");
           setTableId("");
-          setRequestId(crypto.randomUUID());
+          setRequestId(response.nextRequestId);
           router.refresh();
         }
       } catch {
