@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/prisma";
 import { requireWorkspace } from "@/modules/auth/workspace";
 import { manageInventory } from "@/modules/inventory/actions";
 import { inventoryOverview } from "@/modules/inventory/service";
+import { MovementTypeButtons } from "@/modules/inventory/movement-type-buttons";
 
 const unitLabel = { KG: "kg", G: "g", L: "L", ML: "ml", UNIT: "ud." };
 const movementUi = {
@@ -12,7 +13,6 @@ const movementUi = {
   EXIT: { label: "Salida", color: "bg-brand-soft text-brand", amount: "text-brand", sign: "−" },
   WASTE: { label: "Merma", color: "bg-danger-soft text-danger", amount: "text-danger", sign: "−" },
 } as const;
-const movementKinds = ["ENTRY", "EXIT", "WASTE"] as const;
 const number = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ error?: string; saved?: string }> }) {
@@ -55,32 +55,32 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               <span className="text-right"><span className="block font-bold tabular-nums">{balance ? number.format(Number(balance.quantity)) : "—"} {unitLabel[ingredient.unit]}</span><span className={`mt-1 inline-block rounded-lg px-2 py-1 text-xs ${color}`}>{status}</span></span>
             </summary>
             <div className="mb-3 space-y-4 rounded-lg border border-line bg-canvas p-3">
-              {balance && <form action={manageInventory} className="reference-card space-y-3 p-3 sm:p-4">
-                <input type="hidden" name="scope" value={scope} /><input type="hidden" name="operation" value="movement" /><input type="hidden" name="ingredientId" value={ingredient.id} /><input type="hidden" name="requestId" value={randomUUID()} />
-                <h3 className="text-lg font-semibold text-ink">Registrar movimiento</h3>
-                <p className="text-sm text-muted">Ingrediente: {ingredient.name}</p>
-                <fieldset>
-                  <legend className="sr-only">Tipo de movimiento</legend>
-                  <div className="grid grid-cols-3 gap-2">
-                    {movementKinds.map((kind) => (
-                      <label key={kind} className={`movement-option relative flex min-h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl px-1 py-3 text-center text-sm font-semibold sm:px-3 ${movementUi[kind].color}`}>
-                        <input type="radio" name="kind" value={kind} defaultChecked={kind === "ENTRY"} required className="sr-only" />
-                        <MovementIcon kind={kind} />
-                        <span>{movementUi[kind].label}</span>
-                        <span aria-hidden="true" className="movement-selected absolute right-2 top-2 text-xs">✓</span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-                <label className="block text-sm text-muted">Cantidad ({unitLabel[ingredient.unit]})<input name="quantity" type="number" min={ingredient.unit === "UNIT" ? "1" : "0.001"} step={ingredient.unit === "UNIT" ? "1" : "0.001"} required className="mt-3 block min-h-14 w-full rounded-lg border border-line bg-surface px-3 py-3 text-base text-ink" /></label>
-                <label className="block text-sm text-muted">Motivo<textarea name="reason" required minLength={3} maxLength={500} rows={1} placeholder="Compra de materias primas..." className="mt-3 block min-h-13 w-full resize-y rounded-lg border border-line bg-surface px-3 py-3 text-sm text-ink" /></label>
-                <button type="submit" className="min-h-12 w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand-hover">Registrar movimiento</button>
+              {balance && <form action={manageInventory} className="movement-form reference-card">
+                <input type="hidden" name="scope" value={scope} />
+                <input type="hidden" name="operation" value="movement" />
+                <input type="hidden" name="ingredientId" value={ingredient.id} />
+                <input type="hidden" name="requestId" value={randomUUID()} />
+                <h3 className="movement-form-title">Registrar movimiento</h3>
+                <p className="movement-form-ingredient">Ingrediente: {ingredient.name}</p>
+                <MovementTypeButtons />
+                <label className="movement-field">
+                  Cantidad ({unitLabel[ingredient.unit]})
+                  <input name="quantity" type="number" min={ingredient.unit === "UNIT" ? "1" : "0.001"} step={ingredient.unit === "UNIT" ? "1" : "0.001"} required />
+                </label>
+                <label className="movement-field">
+                  Motivo
+                  <textarea name="reason" required minLength={3} maxLength={500} rows={1} placeholder="Compra de materias primas..." />
+                </label>
+                <button type="submit" className="movement-submit">Registrar movimiento</button>
               </form>}
-              <form action={manageInventory} className="flex flex-wrap items-end gap-3">
+              <details className="reference-disclosure rounded-xl border border-line bg-surface">
+                <summary className="cursor-pointer rounded-xl px-4 py-3 text-sm font-semibold text-brand">{balance ? "Configurar stock mínimo" : "Habilitar ingrediente en sucursal"}</summary>
+              <form action={manageInventory} className="flex flex-wrap items-end gap-3 border-t border-line p-4">
                 <input type="hidden" name="scope" value={scope} /><input type="hidden" name="operation" value="configure" /><input type="hidden" name="ingredientId" value={ingredient.id} />
                 <label className="min-w-0 flex-1 text-xs text-muted">Stock mínimo<input name="minimum" type="number" min="0" step={ingredient.unit === "UNIT" ? "1" : "0.001"} required defaultValue={balance?.minimum.toString() ?? "0"} className={inputStyle} /></label>
                 <button type="submit" className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand">{balance ? "Guardar mínimo" : "Habilitar en sucursal"}</button>
               </form>
+              </details>
             </div>
           </details>;
         })}
