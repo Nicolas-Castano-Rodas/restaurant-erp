@@ -64,7 +64,7 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
         <label className="mt-3 block text-xs text-muted">Buscar producto
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nombre..." className="mt-2 block w-full rounded-lg border border-line bg-surface px-3 py-3 text-sm" />
         </label>
-        <div className="my-4 flex flex-wrap gap-2" aria-label="Categorías">
+        <div className="my-4 flex flex-wrap gap-2">
           {["", ...categories].map((name) => <button key={name} type="button" onClick={() => setCategory(name)} aria-pressed={category === name} className={category === name ? "rounded-lg bg-ink px-3 py-2 text-sm text-white" : "rounded-lg border border-line px-3 py-2 text-sm text-muted"}>{name || "Todos"}</button>)}
         </div>
         <div className="grid gap-2 sm:grid-cols-2">

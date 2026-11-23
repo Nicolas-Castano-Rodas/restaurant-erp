@@ -230,6 +230,10 @@ model Order {
   requestHash    String @db.VarChar(64)
   channel        OrderChannel
   status         OrderStatus @default(OPEN)
+  kitchenStatus  KitchenStatus @default(PENDING)
+  preparingAt    DateTime?
+  readyAt        DateTime?
+  servedAt       DateTime?
   currency       String @db.VarChar(3)
   subtotal       Decimal @db.Decimal(16, 2)
   discount       Decimal @default(0) @db.Decimal(16, 2)
@@ -246,6 +250,7 @@ model Order {
   @@unique([organizationId, id])
   @@unique([organizationId, branchId, requestId])
   @@index([organizationId, branchId, status, createdAt])
+  @@index([organizationId, branchId, kitchenStatus, createdAt])
 }
 
 model OrderLine {
@@ -265,4 +270,11 @@ model OrderLine {
 
   @@index([organizationId, orderId])
   @@index([organizationId, productId, variantId])
+}
+
+enum KitchenStatus {
+  PENDING
+  PREPARING
+  READY
+  SERVED
 }

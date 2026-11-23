@@ -42,9 +42,11 @@ npm run db:deploy
 npm run dev
 ```
 
-El cliente de Prisma se genera automáticamente después de instalar dependencias y antes de iniciar el servidor de desarrollo, compilar o comprobar tipos. No requiere una conexión activa para generarlo. Para migrar y usar la aplicación sí debes configurar DATABASE_URL. Si falta el cliente, ejecuta npm run db:generate.
+El cliente de Prisma se genera automáticamente después de instalar dependencias y antes de compilar o comprobar tipos. En desarrollo se regenera si falta el cliente o cambia el esquema, la configuración o la versión de Prisma. No requiere una conexión activa para generarlo. Para migrar y usar la aplicación sí debes configurar DATABASE_URL. Si falta el cliente, ejecuta npm run db:generate.
 
 Para ingresar a /login, crear el primer propietario mediante el comando interactivo npm run auth:provision siguiendo la guía de autenticación. No requiere variables OWNER_ en .env. No existen credenciales predeterminadas.
+
+Para actualizar: detener Next.js, ejecutar git pull --ff-only origin main, npm install si cambian las dependencias, npm run db:deploy si hay migraciones y npm run dev. No borrar .next de rutina. Solo ante un problema de caché, detener el servidor y ejecutar npm run dev:clean. Si Windows presenta bloqueos de archivos bajo OneDrive, considerar una carpeta local no sincronizada.
 
 Abrir http://localhost:3000. El endpoint /api/health comprueba únicamente la disponibilidad del proceso web; no comprueba la conexión a la base de datos. Consultar la guía de base de datos para configurar PostgreSQL.
 
@@ -66,6 +68,7 @@ El archivo package-lock.json debe generarse mediante npm y guardarse en Git ante
 - [Autenticación y aprovisionamiento inicial](docs/authentication.md)
 - [Catálogo y mesas](docs/catalog.md)
 - [Punto de venta y pedidos](docs/orders.md)
+- [Cocina](docs/kitchen.md)
 
 ## English overview
 
