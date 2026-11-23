@@ -1,16 +1,18 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export function ModulePage({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+export function ModulePage({ title, subtitle, children, showEyebrow = true }: { title: string; subtitle: string; children: ReactNode; showEyebrow?: boolean }) {
   return (
-    <main className="mx-auto min-h-screen max-w-7xl px-6 py-8 md:px-12">
+    <main className="mx-auto min-h-screen max-w-5xl px-3 py-5 sm:px-6">
       <Link href="/dashboard" className="text-sm font-semibold text-brand hover:underline">← Volver al panel</Link>
-      <header className="mb-8 mt-6 border-b border-line pb-6">
-        <p className="text-xs font-bold uppercase tracking-widest text-brand">Restaurant ERP · Operaciones</p>
-        <h1 className="mt-2 text-4xl font-bold text-ink">{title}</h1>
-        <p className="mt-2 text-muted">{subtitle}</p>
+      <div className="reference-panel mt-3">
+      <header className="mb-3">
+        {showEyebrow && <p className="text-xs font-medium uppercase text-brand">Restaurant ERP · Operaciones</p>}
+        <h1 className="mt-3 text-2xl font-semibold text-ink">{title}</h1>
+        <p className="mt-3 text-sm text-muted">{subtitle}</p>
       </header>
       {children}
+      </div>
     </main>
   );
 }
@@ -24,5 +26,5 @@ export function FormFeedback({ error, saved }: { error?: string; saved?: string 
   );
 }
 
-export const inputStyle = "w-full rounded-lg border border-line bg-surface px-3 py-3 text-sm";
-export const buttonStyle = "rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand-hover";
+export const inputStyle = "mt-2 block min-h-9 w-full rounded-lg border border-line bg-surface px-2 py-2 text-sm";
+export const buttonStyle = "w-full rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-hover focus-visible:outline-offset-2";

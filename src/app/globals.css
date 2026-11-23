@@ -60,3 +60,40 @@ body {
   outline: 3px solid var(--info);
   outline-offset: 4px;
 }
+
+/* Compact workspace surfaces based on the approved catalog and table references. */
+.reference-panel {
+  background: #f6f3ef;
+  border: 1px solid #ded9d3;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.reference-card {
+  background: var(--surface);
+  border: 1px solid #e2e2e2;
+  border-radius: 13px;
+  min-width: 0;
+}
+
+.reference-disclosure > summary {
+  list-style: none;
+}
+
+.reference-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.reference-disclosure > summary:hover {
+  background-color: #faf9f7;
+}
+
+.reference-disclosure[open] > summary {
+  background-color: #faf9f7;
+}
+
+.reference-panel input:not([type="checkbox"]),
+.reference-panel select,
+.reference-panel textarea {
+  border-color: #dedede;
+}

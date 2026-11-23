@@ -27,3 +27,6 @@ Los tokens están definidos en src/app/globals.css y expuestos como utilidades T
 - Usar números tabulares en totales y reportes; distinguir estados de pedido, cocina y pago.
 
 La landing presenta conceptos de producto, no una demo funcional. Las capturas promocionales deberán proceder del software ejecutado con datos ficticios.
+
+## Pantallas de catálogo y mesas
+Las referencias aprobadas utilizan paneles crema con bordes sutiles, tarjetas blancas de 13px de radio y una tipografía compacta. En catálogo se muestran dos formularios en paralelo desde pantallas medianas; productos en filas con icono gastronómico, nombre, disponibilidad, precio y acceso de edición. Descripción, variantes y edición se despliegan cuando son necesarias. En mesas se muestran tres indicadores y una cuadrícula de hasta tres columnas; el gráfico de sillas representa la capacidad (hasta ocho sillas dibujadas, con capacidad exacta en texto), y el color representa habilitación administrativa. La creación y edición son desplegables. Los datos siempre provienen de PostgreSQL; no se precargan los valores ilustrativos de las referencias.
