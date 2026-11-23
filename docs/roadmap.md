@@ -4,8 +4,8 @@
 | --- | --- | --- |
 | 0 | Identidad, requisitos y arquitectura inicial | Documentación inicial |
 | 1 | Next.js, TypeScript, estilos, lint y CI | CI inicial superada; lockfile pendiente |
-| 2 | PostgreSQL, Prisma y modelo multiempresa | Esquema y migración publicados; CI pendiente |
-| 3 | Autenticación, permisos y diseño visual | Pendiente |
+| 2 | PostgreSQL, Prisma y modelo multiempresa | Migración y prueba de integridad superadas |
+| 3 | Autenticación, permisos y diseño visual | Acceso y dashboard publicados; CI y recuperación pendientes |
 | 4 | Catálogo, mesas y POS | Pendiente |
 | 5 | Cocina, pagos y caja | Pendiente |
 | 6 | Inventario, recetas y compras | Pendiente |

@@ -2,7 +2,7 @@
 
 **Plataforma de gestión gastronómica multiempresa y multisucursal | Multi-tenant restaurant management platform**
 
-> Estado: base de aplicación e identidad multiempresa publicadas; validación de la nueva migración pendiente. Las funcionalidades de negocio descritas son objetivos de desarrollo.
+> Estado: base de aplicación, identidad multiempresa y acceso inicial publicados; autenticación pendiente de validación CI. Las funcionalidades de negocio descritas son objetivos de desarrollo.
 
 ## Visión
 
@@ -42,6 +42,8 @@ npm run db:deploy
 npm run dev
 ```
 
+Para ingresar a /login, crear el primer propietario mediante el comando npm run auth:provision siguiendo la guía de autenticación. No existen credenciales predeterminadas.
+
 Abrir http://localhost:3000. El endpoint /api/health comprueba únicamente la disponibilidad del proceso web; no comprueba la conexión a la base de datos. Consultar la guía de base de datos para configurar PostgreSQL.
 
 ```bash
@@ -59,6 +61,7 @@ El archivo package-lock.json debe generarse mediante npm y guardarse en Git ante
 - [Hoja de ruta y lanzamiento](docs/roadmap.md)
 - [Sistema de diseño](docs/design-system.md)
 - [Base de datos multiempresa](docs/database.md)
+- [Autenticación y aprovisionamiento inicial](docs/authentication.md)
 
 ## English overview
 
