@@ -30,3 +30,6 @@ La landing presenta conceptos de producto, no una demo funcional. Las capturas p
 
 ## Pantallas de catálogo y mesas
 Las referencias aprobadas utilizan paneles crema con bordes sutiles, tarjetas blancas de 13px de radio y una tipografía compacta. En catálogo se muestran dos formularios en paralelo desde pantallas medianas; productos en filas con icono gastronómico, nombre, disponibilidad, precio y acceso de edición. Descripción, variantes y edición se despliegan cuando son necesarias. En mesas se muestran tres indicadores y una cuadrícula de hasta tres columnas; el gráfico de sillas representa la capacidad (hasta ocho sillas dibujadas, con capacidad exacta en texto), y el color representa habilitación administrativa. La creación y edición son desplegables. Los datos siempre provienen de PostgreSQL; no se precargan los valores ilustrativos de las referencias.
+
+## Inventario: movimientos
+El selector de tipo utiliza tres tarjetas de radio nativas, con SVG y texto: entrada verde petróleo, salida terracota y merma roja. La selección tiene borde y marca de confirmación, con foco visible y navegación por teclado. El formulario usa campos de ancho completo. El historial conserva esos colores y símbolos, con motivo bajo el nombre y cantidad alineada a la derecha. Responsable, fecha y saldo se consultan al desplegar la fila, sin perder trazabilidad.

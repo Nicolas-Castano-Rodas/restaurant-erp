@@ -97,3 +97,34 @@ body {
 .reference-panel textarea {
   border-color: #dedede;
 }
+
+/* Inventory reference: native radio choices styled as operational cards. */
+.movement-option {
+  border: 2px solid transparent;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.movement-option:has(input:checked) {
+  border-color: currentColor;
+}
+
+.movement-option:has(input:focus-visible) {
+  outline: 3px solid var(--info);
+  outline-offset: 3px;
+}
+
+.movement-option:hover {
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.movement-selected {
+  visibility: hidden;
+}
+
+.movement-option:has(input:checked) .movement-selected {
+  visibility: visible;
+}
+
+.movement-history {
+  border-radius: 20px;
+}

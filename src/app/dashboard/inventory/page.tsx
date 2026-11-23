@@ -1,12 +1,18 @@
 import { randomUUID } from "node:crypto";
 import { ModulePage, inputStyle, buttonStyle } from "@/components/workspace/module-page";
+import { MovementIcon } from "@/components/workspace/operation-icons";
 import { getPrisma } from "@/lib/prisma";
 import { requireWorkspace } from "@/modules/auth/workspace";
 import { manageInventory } from "@/modules/inventory/actions";
 import { inventoryOverview } from "@/modules/inventory/service";
 
 const unitLabel = { KG: "kg", G: "g", L: "L", ML: "ml", UNIT: "ud." };
-const movementLabel = { ENTRY: "Entrada", EXIT: "Salida", WASTE: "Merma" };
+const movementUi = {
+  ENTRY: { label: "Entrada", color: "bg-success-soft text-success", amount: "text-success", sign: "+" },
+  EXIT: { label: "Salida", color: "bg-brand-soft text-brand", amount: "text-brand", sign: "−" },
+  WASTE: { label: "Merma", color: "bg-danger-soft text-danger", amount: "text-danger", sign: "−" },
+} as const;
+const movementKinds = ["ENTRY", "EXIT", "WASTE"] as const;
 const number = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ error?: string; saved?: string }> }) {
@@ -49,12 +55,26 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               <span className="text-right"><span className="block font-bold tabular-nums">{balance ? number.format(Number(balance.quantity)) : "—"} {unitLabel[ingredient.unit]}</span><span className={`mt-1 inline-block rounded-lg px-2 py-1 text-xs ${color}`}>{status}</span></span>
             </summary>
             <div className="mb-3 space-y-4 rounded-lg border border-line bg-canvas p-3">
-              {balance && <form action={manageInventory} className="grid gap-3 sm:grid-cols-2">
+              {balance && <form action={manageInventory} className="reference-card space-y-3 p-3 sm:p-4">
                 <input type="hidden" name="scope" value={scope} /><input type="hidden" name="operation" value="movement" /><input type="hidden" name="ingredientId" value={ingredient.id} /><input type="hidden" name="requestId" value={randomUUID()} />
-                <label className="block text-xs text-muted">Tipo<select name="kind" className={inputStyle}><option value="ENTRY">Entrada</option><option value="EXIT">Salida</option><option value="WASTE">Merma</option></select></label>
-                <label className="block text-xs text-muted">Cantidad ({unitLabel[ingredient.unit]})<input name="quantity" type="number" min={ingredient.unit === "UNIT" ? "1" : "0.001"} step={ingredient.unit === "UNIT" ? "1" : "0.001"} required className={inputStyle} /></label>
-                <label className="block text-xs text-muted sm:col-span-2">Motivo<textarea name="reason" required minLength={3} maxLength={500} rows={2} placeholder="Compra, consumo manual o desperdicio..." className={inputStyle} /></label>
-                <div className="sm:col-span-2"><button type="submit" className={buttonStyle}>Registrar movimiento</button></div>
+                <h3 className="text-lg font-semibold text-ink">Registrar movimiento</h3>
+                <p className="text-sm text-muted">Ingrediente: {ingredient.name}</p>
+                <fieldset>
+                  <legend className="sr-only">Tipo de movimiento</legend>
+                  <div className="grid grid-cols-3 gap-2">
+                    {movementKinds.map((kind) => (
+                      <label key={kind} className={`movement-option relative flex min-h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl px-1 py-3 text-center text-sm font-semibold sm:px-3 ${movementUi[kind].color}`}>
+                        <input type="radio" name="kind" value={kind} defaultChecked={kind === "ENTRY"} required className="sr-only" />
+                        <MovementIcon kind={kind} />
+                        <span>{movementUi[kind].label}</span>
+                        <span aria-hidden="true" className="movement-selected absolute right-2 top-2 text-xs">✓</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <label className="block text-sm text-muted">Cantidad ({unitLabel[ingredient.unit]})<input name="quantity" type="number" min={ingredient.unit === "UNIT" ? "1" : "0.001"} step={ingredient.unit === "UNIT" ? "1" : "0.001"} required className="mt-3 block min-h-14 w-full rounded-lg border border-line bg-surface px-3 py-3 text-base text-ink" /></label>
+                <label className="block text-sm text-muted">Motivo<textarea name="reason" required minLength={3} maxLength={500} rows={1} placeholder="Compra de materias primas..." className="mt-3 block min-h-13 w-full resize-y rounded-lg border border-line bg-surface px-3 py-3 text-sm text-ink" /></label>
+                <button type="submit" className="min-h-12 w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand-hover">Registrar movimiento</button>
               </form>}
               <form action={manageInventory} className="flex flex-wrap items-end gap-3">
                 <input type="hidden" name="scope" value={scope} /><input type="hidden" name="operation" value="configure" /><input type="hidden" name="ingredientId" value={ingredient.id} />
@@ -67,10 +87,34 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         {!ingredients.length && <p className="py-5 text-sm text-muted">Crea tu primer ingrediente para iniciar el control de inventario.</p>}
       </div>
     </section>
-    <section className="reference-card p-4">
-      <h2 className="font-semibold">Últimos movimientos</h2>
-      <div className="mt-3 divide-y divide-line">{movements.map((movement) => <article key={movement.id} className="flex flex-wrap items-start justify-between gap-3 py-3"><div><h3 className="text-sm font-semibold">{movement.balance.ingredient.name} · {movementLabel[movement.kind]}</h3><p className="mt-1 text-xs text-muted">{movement.reason} · {movement.membership.user.name}</p><p className="mt-1 text-xs text-muted">{movement.createdAt.toLocaleString("es-CO", { timeZone: context.organization.timeZone })}</p></div><div className="text-right"><p className={movement.kind === "ENTRY" ? "font-semibold text-success" : "font-semibold text-danger"}>{movement.kind === "ENTRY" ? "+" : "−"}{number.format(Number(movement.quantity))} {unitLabel[movement.balance.ingredient.unit]}</p><p className="text-xs text-muted">Saldo: {number.format(Number(movement.balanceAfter))}</p></div></article>)}
-      {!movements.length && <p className="py-3 text-sm text-muted">Aún no hay movimientos registrados.</p>}</div>
+    <section className="reference-card movement-history p-4">
+      <h2 className="text-xl font-semibold text-ink">Últimos movimientos</h2>
+      <div className="divide-y divide-[#e2e2e2]">
+        {movements.map((movement) => {
+          const ui = movementUi[movement.kind];
+          const unit = unitLabel[movement.balance.ingredient.unit];
+          return (
+            <details key={movement.id} className="reference-disclosure">
+              <summary className="flex min-h-24 cursor-pointer items-center gap-3 rounded-md py-5 sm:gap-4 sm:py-6">
+                <span className={`grid size-12 shrink-0 place-items-center rounded-xl ${ui.color}`}><MovementIcon kind={movement.kind} /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block break-words text-base font-semibold text-ink sm:text-lg">{movement.balance.ingredient.name} · {ui.label}</span>
+                  <span className="mt-1 block break-words text-sm text-muted">{movement.reason}</span>
+                  <span className="sr-only">Ver responsable, fecha y saldo</span>
+                </span>
+                <span className={`shrink-0 text-right text-base font-bold tabular-nums sm:text-lg ${ui.amount}`}>{ui.sign}{number.format(Number(movement.quantity))} {unit}</span>
+              </summary>
+              <dl className="mb-4 grid gap-3 rounded-lg bg-canvas p-3 text-xs text-muted sm:grid-cols-3">
+                <div><dt>Responsable</dt><dd className="mt-1 break-words font-semibold text-ink">{movement.membership.user.name}</dd></div>
+                <div><dt>Fecha</dt><dd className="mt-1 font-semibold text-ink">{movement.createdAt.toLocaleString("es-CO", { timeZone: context.organization.timeZone })}</dd></div>
+                <div><dt>Saldo resultante</dt><dd className="mt-1 font-semibold text-ink">{number.format(Number(movement.balanceAfter))} {unit}</dd></div>
+              </dl>
+            </details>
+          );
+        })}
+        {!movements.length && <p className="py-5 text-sm text-muted">Aún no hay movimientos registrados.</p>}
+      </div>
+      {movements.length > 0 && <p className="border-t border-[#e2e2e2] pt-3 text-xs text-muted">Selecciona un movimiento para consultar su detalle.</p>}
     </section>
     <p className="mt-3 text-xs text-muted">Las ventas todavía no descuentan ingredientes automáticamente. Las recetas y el consumo asociado a cocina se incorporarán en la siguiente etapa.</p>
   </ModulePage>;
