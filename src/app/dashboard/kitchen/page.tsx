@@ -43,7 +43,7 @@ export default async function KitchenPage({ searchParams }: { searchParams: Prom
           </section>;
         })}
       </div>
-      <p className="mt-3 text-xs text-muted">Entregar una comanda no cobra el pedido ni libera la mesa. El cierre comercial se realiza en caja cuando esté habilitada.</p>
+      <p className="mt-3 text-xs text-muted">Entregar una comanda no cobra el pedido ni libera la mesa. El cierre comercial se realiza en caja.</p>
     </ModulePage>
   );
 }

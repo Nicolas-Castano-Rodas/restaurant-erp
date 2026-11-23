@@ -4,4 +4,4 @@ Ruta /dashboard/kitchen, permiso kitchen.manage. Muestra comandas abiertas de la
 
 Transiciones permitidas: PENDING -> PREPARING -> READY -> SERVED. Cada transición registra su fecha, exige autorización y comprueba el estado anterior para evitar saltos o doble avance. Entregado no significa pagado ni cerrado. La mesa permanece ocupada hasta el cierre comercial. Los pedidos anteriores a la migración se inicializan en PENDING.
 
-Pruebas de integración cubren aislamiento por sucursal, transiciones válidas, estado obsoleto y separación del estado comercial. Caja, pagos, anulaciones e impuestos siguen pendientes.
+Pruebas de integración cubren aislamiento por sucursal, transiciones válidas, estado obsoleto y separación del estado comercial. Caja inicial gestiona cobros y cancelaciones de pedidos abiertos; impuestos y devoluciones siguen pendientes.

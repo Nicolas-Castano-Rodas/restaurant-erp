@@ -36,6 +36,7 @@ model Branch {
   assignments    MembershipBranch[]
   tables         RestaurantTable[]
   orders         Order[]
+  cashShifts     CashShift[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, code])
@@ -97,6 +98,10 @@ model Membership {
   role           Role               @relation(fields: [organizationId, roleId], references: [organizationId, id], onDelete: Restrict)
   branches       MembershipBranch[]
   orders         Order[]
+  openedShifts   CashShift[] @relation("ShiftOpenedBy")
+  closedShifts   CashShift[] @relation("ShiftClosedBy")
+  payments       Payment[]
+  closedOrders   Order[] @relation("OrderClosedBy")
 
   @@unique([organizationId, id])
   @@unique([organizationId, userId])
@@ -234,6 +239,9 @@ model Order {
   preparingAt    DateTime?
   readyAt        DateTime?
   servedAt       DateTime?
+  closedAt       DateTime?
+  closedById     String? @db.Uuid
+  cancelReason   String?
   currency       String @db.VarChar(3)
   subtotal       Decimal @db.Decimal(16, 2)
   discount       Decimal @default(0) @db.Decimal(16, 2)
@@ -246,8 +254,11 @@ model Order {
   membership     Membership @relation(fields: [organizationId, membershipId], references: [organizationId, id], onDelete: Restrict)
   table          RestaurantTable? @relation(fields: [organizationId, branchId, tableId], references: [organizationId, branchId, id], onDelete: Restrict)
   lines          OrderLine[]
+  payment        Payment?
+  closedBy       Membership? @relation("OrderClosedBy", fields: [organizationId, closedById], references: [organizationId, id], onDelete: Restrict)
 
   @@unique([organizationId, id])
+  @@unique([organizationId, branchId, id])
   @@unique([organizationId, branchId, requestId])
   @@index([organizationId, branchId, status, createdAt])
   @@index([organizationId, branchId, kitchenStatus, createdAt])
@@ -277,4 +288,59 @@ enum KitchenStatus {
   PREPARING
   READY
   SERVED
+}
+
+enum CashShiftStatus {
+  OPEN
+  CLOSED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+}
+
+model CashShift {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  branchId       String @db.Uuid
+  openedById     String @db.Uuid
+  closedById     String? @db.Uuid
+  currency       String @db.VarChar(3)
+  status         CashShiftStatus @default(OPEN)
+  openingAmount  Decimal @db.Decimal(16, 2)
+  expectedAmount Decimal? @db.Decimal(16, 2)
+  countedAmount  Decimal? @db.Decimal(16, 2)
+  difference     Decimal? @db.Decimal(16, 2)
+  openedAt       DateTime @default(now())
+  closedAt       DateTime?
+  branch         Branch @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
+  openedBy       Membership @relation("ShiftOpenedBy", fields: [organizationId, openedById], references: [organizationId, id], onDelete: Restrict)
+  closedBy       Membership? @relation("ShiftClosedBy", fields: [organizationId, closedById], references: [organizationId, id], onDelete: Restrict)
+  payments       Payment[]
+
+  @@unique([organizationId, branchId, id])
+  @@index([organizationId, branchId, status, openedAt])
+}
+
+model Payment {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  branchId       String @db.Uuid
+  orderId        String @db.Uuid
+  shiftId        String @db.Uuid
+  membershipId   String @db.Uuid
+  method         PaymentMethod
+  currency       String @db.VarChar(3)
+  amount         Decimal @db.Decimal(16, 2)
+  received       Decimal @db.Decimal(16, 2)
+  change         Decimal @db.Decimal(16, 2)
+  createdAt      DateTime @default(now())
+  order          Order @relation(fields: [organizationId, branchId, orderId], references: [organizationId, branchId, id], onDelete: Restrict)
+  shift          CashShift @relation(fields: [organizationId, branchId, shiftId], references: [organizationId, branchId, id], onDelete: Restrict)
+  membership     Membership @relation(fields: [organizationId, membershipId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, branchId, orderId])
+  @@index([organizationId, branchId, shiftId])
 }

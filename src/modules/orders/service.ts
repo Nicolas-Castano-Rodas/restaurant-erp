@@ -106,6 +106,6 @@ export function listOrders(db: PrismaClient, organizationId: string, branchId: s
     where: { organizationId, branchId },
     orderBy: { createdAt: "desc" },
     take: 50,
-    select: { id: true, channel: true, status: true, kitchenStatus: true, tableName: true, total: true, currency: true, createdAt: true, note: true, lines: { select: { id: true, productName: true, variantName: true, quantity: true, lineTotal: true } } },
+    select: { id: true, channel: true, status: true, kitchenStatus: true, tableName: true, total: true, currency: true, createdAt: true, note: true, cancelReason: true, closedAt: true, payment: { select: { method: true, amount: true, received: true, change: true, createdAt: true } }, lines: { select: { id: true, productName: true, variantName: true, quantity: true, lineTotal: true } } },
   });
 }
