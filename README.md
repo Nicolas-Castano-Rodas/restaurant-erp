@@ -2,7 +2,7 @@
 
 **Plataforma de gestión gastronómica multiempresa y multisucursal | Multi-tenant restaurant management platform**
 
-> Estado: base de aplicación publicada, pendiente de validación de CI. Las funcionalidades de negocio descritas son objetivos de desarrollo.
+> Estado: base de aplicación e identidad multiempresa publicadas; validación de la nueva migración pendiente. Las funcionalidades de negocio descritas son objetivos de desarrollo.
 
 ## Visión
 
@@ -25,7 +25,7 @@ Restaurant ERP busca centralizar la operación de restaurantes, desde la toma de
 
 ## Stack
 
-Next.js 16, React 19, TypeScript 5.9, Tailwind CSS 4 y Biome. PostgreSQL, Prisma, Zod, shadcn/ui y pruebas automatizadas se incorporarán por fases.
+Next.js 16, React 19, TypeScript 5.9, Tailwind CSS 4, Biome, PostgreSQL y Prisma ORM. Zod y shadcn/ui se incorporarán por fases.
 
 ## Desarrollo local
 
@@ -35,10 +35,14 @@ Requisitos: Git, Node.js 24 y npm.
 git clone https://github.com/Nicolas-Castano-Rodas/restaurant-erp.git
 cd restaurant-erp
 npm install
+# Configurar .env a partir de .env.example con una base nueva.
+npm run db:validate
+npm run db:generate
+npm run db:deploy
 npm run dev
 ```
 
-Abrir http://localhost:3000. El endpoint /api/health comprueba únicamente la disponibilidad del proceso web; aún no existe conexión a la base de datos.
+Abrir http://localhost:3000. El endpoint /api/health comprueba únicamente la disponibilidad del proceso web; no comprueba la conexión a la base de datos. Consultar la guía de base de datos para configurar PostgreSQL.
 
 ```bash
 npm run lint
@@ -53,6 +57,8 @@ El archivo package-lock.json debe generarse mediante npm y guardarse en Git ante
 - [Requisitos del producto](docs/product-requirements.md)
 - [Arquitectura técnica](docs/architecture.md)
 - [Hoja de ruta y lanzamiento](docs/roadmap.md)
+- [Sistema de diseño](docs/design-system.md)
+- [Base de datos multiempresa](docs/database.md)
 
 ## English overview
 
