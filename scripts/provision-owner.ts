@@ -1,22 +1,89 @@
 import "dotenv/config";
+import { createInterface } from "node:readline/promises";
+import { Writable } from "node:stream";
 import { getPrisma } from "../src/lib/prisma";
 import { hashPassword, validPassword } from "../src/modules/auth/password";
 import { permissions } from "../src/modules/auth/permissions";
 import { normalizeEmail, validEmail } from "../src/modules/auth/service";
 
+async function readOwner() {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    return {
+      email: normalizeEmail(process.env.OWNER_EMAIL ?? ""),
+      name: process.env.OWNER_NAME?.trim() ?? "",
+      password: process.env.OWNER_PASSWORD ?? "",
+      organizationName: process.env.OWNER_ORGANIZATION?.trim() ?? "",
+      slug: process.env.OWNER_SLUG?.trim() ?? "",
+    };
+  }
+
+  let hidden = false;
+  const output = new Writable({
+    write(chunk, encoding, callback) {
+      if (!hidden) process.stdout.write(chunk, encoding);
+      callback();
+    },
+  });
+  const rl = createInterface({ input: process.stdin, output, terminal: true });
+  try {
+    console.log("\nRestaurant ERP — Registrar propietario\n");
+    const organizationName = (await rl.question("Nombre del restaurante: ")).trim();
+    const suggestedSlug = organizationName.normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    const slug = (await rl.question(suggestedSlug ? `Identificador [${suggestedSlug}]: ` : "Identificador: ")).trim() || suggestedSlug;
+    const name = (await rl.question("Nombre del propietario: ")).trim();
+    const email = normalizeEmail(await rl.question("Correo electrónico: "));
+    async function secret(prompt: string) {
+      process.stdout.write(prompt);
+      hidden = true;
+      try {
+        return await rl.question("");
+      } finally {
+        hidden = false;
+        process.stdout.write("\n");
+      }
+    }
+    const password = await secret("Contraseña (mínimo 12 caracteres; entrada oculta): ");
+    if (!validPassword(password)) {
+      console.error("La contraseña debe tener mínimo 12 caracteres y máximo 256 bytes.");
+      return null;
+    }
+    const confirmation = await secret("Confirmar contraseña: ");
+    if (password !== confirmation) {
+      console.error("Las contraseñas no coinciden.");
+      return null;
+    }
+    const confirm = (await rl.question("¿Crear restaurante y propietario? [s/N]: ")).trim().toLowerCase();
+    if (confirm !== "s" && confirm !== "si" && confirm !== "sí") {
+      console.log("Registro cancelado. No se modificó la base de datos.");
+      return null;
+    }
+    return { email, name, password, organizationName, slug };
+  } finally {
+    rl.close();
+    output.end();
+  }
+}
+
 async function main() {
-  const email = normalizeEmail(process.env.OWNER_EMAIL ?? "");
-  const name = process.env.OWNER_NAME?.trim() ?? "";
-  const password = process.env.OWNER_PASSWORD ?? "";
-  const organizationName = process.env.OWNER_ORGANIZATION?.trim() ?? "";
-  const slug = process.env.OWNER_SLUG?.trim() ?? "";
+  if (!process.env.DATABASE_URL) {
+    console.error("DATABASE_URL: conexión requerida.");
+    process.exitCode = 1;
+    return;
+  }
+  const owner = await readOwner();
+  if (!owner) {
+    process.exitCode = 1;
+    return;
+  }
+  const { email, name, password, organizationName, slug } = owner;
   const invalid: string[] = [];
   if (!validEmail(email)) invalid.push("OWNER_EMAIL: correo válido requerido");
   if (!name) invalid.push("OWNER_NAME: nombre requerido");
   if (!validPassword(password)) invalid.push("OWNER_PASSWORD: mínimo 12 caracteres, máximo 256 bytes");
   if (!organizationName) invalid.push("OWNER_ORGANIZATION: nombre requerido");
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) invalid.push("OWNER_SLUG: letras minúsculas, números y guiones");
-  if (!process.env.DATABASE_URL) invalid.push("DATABASE_URL: conexión requerida");
   if (invalid.length) {
     console.error("Configuración inválida:");
     for (const issue of invalid) console.error(`- ${issue}`);
@@ -77,7 +144,7 @@ main().catch((error: unknown) => {
       console.error("No se pudo completar la transacción. Comprueba la conexión y vuelve a intentar.");
       break;
     default:
-      console.error("No se pudo crear el propietario.", typeof code === "string" && /^(P\\d{4}|[A-Z0-9_]{2,32})$/.test(code) ? `Código: ${code}` : "Error no clasificado.");
+      console.error("No se pudo crear el propietario.", typeof code === "string" && /^(P\d{4}|[A-Z0-9_]{2,32})$/.test(code) ? `Código: ${code}` : "Error no clasificado.");
   }
   process.exitCode = 1;
 });

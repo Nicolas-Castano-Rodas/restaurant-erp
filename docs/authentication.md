@@ -12,17 +12,15 @@
 - Los errores de credenciales son genéricos. No se almacenan contraseñas o tokens en registros.
 
 ## Primer propietario (local)
-Aplicar las migraciones y generar Prisma. Añadir temporalmente estas variables a .env (ignorado por Git), sustituyendo todos los ejemplos:
+Aplicar las migraciones y generar Prisma. Configurar DATABASE_URL en .env (ignorado por Git). Ejecutar en una terminal interactiva:
 
-```dotenv
-OWNER_EMAIL=correo@ejemplo.invalid
-OWNER_NAME=Nombre del propietario
-OWNER_PASSWORD=REEMPLAZAR_POR_UNA_CONTRASENA_LARGA_UNICA
-OWNER_ORGANIZATION=Nombre del restaurante
-OWNER_SLUG=nombre-del-restaurante
+```bash
+npm run auth:provision
 ```
 
-Ejecutar npm run auth:provision. El comando crea en una transacción una nueva organización, sucursal, propietario y permisos iniciales. No actualiza cuentas existentes ni reutiliza credenciales. Eliminar OWNER_PASSWORD y las variables de aprovisionamiento de .env tras ejecutarlo. No utilizar los ejemplos como contraseñas reales.
+Introducir restaurante, identificador (se sugiere automáticamente), nombre, correo, contraseña y confirmación. La contraseña se introduce sin eco. El comando crea en una transacción una nueva organización, sucursal, propietario y permisos iniciales. No actualiza cuentas existentes ni guarda contraseñas en archivos.
+
+En terminales no interactivas se conserva el aprovisionamiento mediante variables OWNER_EMAIL, OWNER_NAME, OWNER_PASSWORD, OWNER_ORGANIZATION y OWNER_SLUG, suministradas por un mecanismo seguro. No son necesarias en desarrollo interactivo. Eliminar las variables OWNER_ anteriores de .env si existen, sin modificar DATABASE_URL.
 
 Abrir /login y seleccionar la sucursal desde /dashboard. En producción usar HTTPS. Ejecutar npm run auth:cleanup periódicamente para eliminar sesiones y contadores expirados.
 

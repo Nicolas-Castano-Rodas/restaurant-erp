@@ -44,7 +44,7 @@ npm run dev
 
 El cliente de Prisma se genera automáticamente después de instalar dependencias y antes de iniciar el servidor de desarrollo, compilar o comprobar tipos. No requiere una conexión activa para generarlo. Para migrar y usar la aplicación sí debes configurar DATABASE_URL. Si falta el cliente, ejecuta npm run db:generate.
 
-Para ingresar a /login, crear el primer propietario mediante el comando npm run auth:provision siguiendo la guía de autenticación. No existen credenciales predeterminadas.
+Para ingresar a /login, crear el primer propietario mediante el comando interactivo npm run auth:provision siguiendo la guía de autenticación. No requiere variables OWNER_ en .env. No existen credenciales predeterminadas.
 
 Abrir http://localhost:3000. El endpoint /api/health comprueba únicamente la disponibilidad del proceso web; no comprueba la conexión a la base de datos. Consultar la guía de base de datos para configurar PostgreSQL.
 
