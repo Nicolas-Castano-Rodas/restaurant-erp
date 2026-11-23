@@ -6,6 +6,14 @@ import { hashPassword, validPassword } from "../src/modules/auth/password";
 import { permissions } from "../src/modules/auth/permissions";
 import { normalizeEmail, validEmail } from "../src/modules/auth/service";
 
+function normalizeSlug(value: string): string {
+  return value.normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 async function readOwner() {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     return {
@@ -28,10 +36,14 @@ async function readOwner() {
   try {
     console.log("\nRestaurant ERP — Registrar propietario\n");
     const organizationName = (await rl.question("Nombre del restaurante: ")).trim();
-    const suggestedSlug = organizationName.normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    const slug = (await rl.question(suggestedSlug ? `Identificador [${suggestedSlug}]: ` : "Identificador: ")).trim() || suggestedSlug;
+    const suggestedSlug = normalizeSlug(organizationName);
+    const enteredSlug = (await rl.question(suggestedSlug ? `Identificador [${suggestedSlug}] (Enter para aceptar): ` : "Identificador: ")).trim();
+    const slug = normalizeSlug(enteredSlug || suggestedSlug);
+    if (!organizationName || !slug) {
+      console.error("Introduce un nombre y un identificador que contenga letras o números.");
+      return null;
+    }
+    console.log(`Identificador definitivo: ${slug}`);
     const name = (await rl.question("Nombre del propietario: ")).trim();
     const email = normalizeEmail(await rl.question("Correo electrónico: "));
     async function secret(prompt: string) {
