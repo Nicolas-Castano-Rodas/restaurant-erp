@@ -1,10 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
-  background: #0c1513;
-  color: #f2f6f3;
+  color-scheme: light;
+  --background: #f8f5f0;
+  --surface: #ffffff;
+  --foreground: #172b4d;
+  --muted: #475569;
+  --primary: #c2410c;
+  --primary-hover: #9a3412;
+  --border: #e1dbd3;
+  --success: #0f766e;
+  --warning: #92400e;
+  --info: #1d4ed8;
+  --danger: #b91c1c;
+  --neutral: #475569;
+  --success-surface: #ccfbf1;
+  --warning-surface: #fef3c7;
+  --info-surface: #dbeafe;
+  --danger-surface: #fee2e2;
+  --primary-surface: #ffedd5;
+  --neutral-surface: #f1f5f9;
+  background: var(--background);
+  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@theme inline {
+  --color-canvas: var(--background);
+  --color-surface: var(--surface);
+  --color-ink: var(--foreground);
+  --color-muted: var(--muted);
+  --color-brand: var(--primary);
+  --color-brand-hover: var(--primary-hover);
+  --color-line: var(--border);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-danger: var(--danger);
+  --color-neutral-status: var(--neutral);
+  --color-brand-soft: var(--primary-surface);
+  --color-success-soft: var(--success-surface);
+  --color-warning-soft: var(--warning-surface);
+  --color-info-soft: var(--info-surface);
+  --color-danger-soft: var(--danger-surface);
+  --color-neutral-soft: var(--neutral-surface);
 }
 
 body {
@@ -13,11 +52,11 @@ body {
 }
 
 ::selection {
-  background: #c7f36b;
-  color: #122019;
+  background: var(--primary-surface);
+  color: var(--foreground);
 }
 
 :focus-visible {
-  outline: 2px solid #c7f36b;
-  outline-offset: 5px;
+  outline: 3px solid var(--info);
+  outline-offset: 4px;
 }
