@@ -2,7 +2,7 @@
 
 **Plataforma de gestión gastronómica multiempresa y multisucursal | Multi-tenant restaurant management platform**
 
-> Estado: planificación y arquitectura inicial. Las funcionalidades descritas son objetivos de desarrollo, no características disponibles todavía.
+> Estado: base de aplicación publicada, pendiente de validación de CI. Las funcionalidades de negocio descritas son objetivos de desarrollo.
 
 ## Visión
 
@@ -21,26 +21,38 @@ Restaurant ERP busca centralizar la operación de restaurantes, desde la toma de
 | Clientes | Historial y gestión de domicilios |
 | Administración | Organizaciones, sucursales, usuarios y permisos |
 | Analítica | Indicadores operativos y comerciales |
-| Facturación | Integración futura con proveedores autorizados, según requisitos aplicables |
+| Facturación | Integración futura con proveedores autorizados |
 
-## Arquitectura propuesta
+## Stack
 
-- Next.js, React y TypeScript.
-- Tailwind CSS y shadcn/ui.
-- PostgreSQL y Prisma ORM.
-- Zod para validación de entradas.
-- Biome, Vitest, Playwright y GitHub Actions.
-- Monolito modular con límites de dominio y aislamiento por organización.
+Next.js 16, React 19, TypeScript 5.9, Tailwind CSS 4 y Biome. PostgreSQL, Prisma, Zod, shadcn/ui y pruebas automatizadas se incorporarán por fases.
+
+## Desarrollo local
+
+Requisitos: Git, Node.js 24 y npm.
+
+```bash
+git clone https://github.com/Nicolas-Castano-Rodas/restaurant-erp.git
+cd restaurant-erp
+npm install
+npm run dev
+```
+
+Abrir http://localhost:3000. El endpoint /api/health comprueba únicamente la disponibilidad del proceso web; aún no existe conexión a la base de datos.
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
+
+El archivo package-lock.json debe generarse mediante npm y guardarse en Git antes de considerar reproducible la instalación. Después se utilizará npm ci.
 
 ## Documentación
 
 - [Requisitos del producto](docs/product-requirements.md)
 - [Arquitectura técnica](docs/architecture.md)
 - [Hoja de ruta y lanzamiento](docs/roadmap.md)
-
-## Desarrollo local
-
-La aplicación aún no ha sido inicializada. Los requisitos de entorno, las variables de configuración y los comandos reproducibles se documentarán al incorporar el código y el archivo de bloqueo de dependencias.
 
 ## English overview
 
