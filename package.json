@@ -20,7 +20,8 @@
     "db:test": "tsx tests/integration/tenant-integrity.ts",
     "auth:provision": "tsx scripts/provision-owner.ts",
     "auth:test": "tsx tests/integration/auth.ts",
-    "auth:cleanup": "tsx scripts/cleanup-auth.ts"
+    "auth:cleanup": "tsx scripts/cleanup-auth.ts",
+    "catalog:test": "tsx tests/integration/catalog.ts"
   },
   "dependencies": {
     "next": "16.4.6",

@@ -65,6 +65,10 @@ jobs:
         env:
           RUN_DB_TESTS: "true"
         run: npm run auth:test
+      - name: Catalog and table integration test
+        env:
+          RUN_DB_TESTS: "true"
+        run: npm run catalog:test
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
@@ -77,3 +81,6 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:3000/ > /dev/null
           curl --fail --silent --show-error http://127.0.0.1:3000/login | grep -q 'Iniciar sesión'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard)" = "307"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/catalog)" = "401"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/catalog)" = "307"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/tables)" = "307"

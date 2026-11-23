@@ -4,12 +4,13 @@ import { changeContext, logout } from "@/modules/auth/actions";
 import { currentSession } from "@/modules/auth/request";
 import { hasPermission } from "@/modules/auth/service";
 
-const modules = [
+const modules: { name: string; detail: string; permission: string; href?: string }[] = [
+  { name: "Mesas", detail: "Distribución y capacidad", permission: "orders.manage", href: "/dashboard/tables" },
   { name: "Punto de venta", detail: "Pedidos y mesas", permission: "orders.manage" },
   { name: "Cocina", detail: "Comandas y preparación", permission: "kitchen.manage" },
   { name: "Inventario", detail: "Ingredientes y existencias", permission: "inventory.manage" },
   { name: "Caja", detail: "Cobros y turnos", permission: "cash.manage" },
-  { name: "Catálogo", detail: "Productos y precios", permission: "catalog.manage" },
+  { name: "Catálogo", detail: "Productos y precios", permission: "catalog.manage", href: "/dashboard/catalog" },
   { name: "Administración", detail: "Organización y equipo", permission: "team.manage" },
 ];
 
@@ -32,9 +33,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </Link>
         <nav aria-label="Menú administrativo" className="mt-10">
           <Link href="/dashboard" aria-current="page" className="block rounded-lg bg-white/15 px-4 py-3 text-sm font-semibold">Resumen</Link>
-          <p className="mb-3 mt-8 text-xs font-semibold uppercase tracking-widest text-slate-300">Módulos previstos</p>
+          <p className="mb-3 mt-8 text-xs font-semibold uppercase tracking-widest text-slate-300">Módulos</p>
           {visibleModules.map((module) => (
-            <p key={module.name} className="px-4 py-2 text-sm text-slate-300">{module.name}</p>
+            module.href ? <Link key={module.name} href={module.href} className="block rounded-lg px-4 py-2 text-sm text-white hover:bg-white/10">{module.name}</Link> : <p key={module.name} className="px-4 py-2 text-sm text-slate-300">{module.name}</p>
           ))}
         </nav>
         <form action={logout} className="mt-8">
@@ -52,6 +53,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </header>
         <section className="mt-6 rounded-xl border border-line bg-surface p-5">
           <h2 className="text-lg font-bold">Organización y sucursal</h2>
+          {error === "permission" && <p role="alert" className="mt-3 text-sm text-danger">Selecciona una sucursal autorizada y verifica tus permisos.</p>}
           {error === "context" && <p role="alert" className="mt-3 text-sm text-danger">No tienes acceso a la selección solicitada.</p>}
           {options.length ? (
             <form action={changeContext} className="mt-4 flex flex-wrap items-end gap-3">
@@ -69,13 +71,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         {context && (
           <section className="mt-8">
             <h2 className="text-xl font-bold">Módulos de tu espacio de trabajo</h2>
-            <p className="mt-2 text-sm text-muted">Los módulos se mostrarán según tus permisos. Las operaciones y métricas se habilitarán en próximas fases.</p>
+            <p className="mt-2 text-sm text-muted">Accede a los módulos habilitados según tus permisos.</p>
             <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {visibleModules.map((module) => (
                 <article key={module.name} className="rounded-xl border border-line bg-surface p-5">
-                  <span className="text-xs font-semibold text-brand">Próximamente</span>
+                  <span className="text-xs font-semibold text-brand">{module.href ? "Disponible" : "Próximamente"}</span>
                   <h3 className="mt-3 text-lg font-bold">{module.name}</h3>
                   <p className="mt-2 text-sm text-muted">{module.detail}</p>
+                  {module.href && <Link href={module.href} className="mt-4 inline-block text-sm font-semibold text-brand hover:underline">Abrir módulo →</Link>}
                 </article>
               ))}
             </div>
