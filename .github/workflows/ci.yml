@@ -18,6 +18,22 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: restaurant_test
+          POSTGRES_PASSWORD: ci_only_password
+          POSTGRES_DB: restaurant_erp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U restaurant_test -d restaurant_erp_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://restaurant_test:ci_only_password@localhost:5432/restaurant_erp_test?schema=public
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,6 +54,13 @@ jobs:
           path: package-lock.json
           if-no-files-found: error
           retention-days: 7
+      - run: npm run db:validate
+      - run: npm run db:generate
+      - run: npm run db:deploy
+      - name: Tenant integrity integration test
+        env:
+          RUN_DB_TESTS: "true"
+        run: npm run db:test
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build

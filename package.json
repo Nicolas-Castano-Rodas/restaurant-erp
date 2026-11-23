@@ -12,12 +12,21 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:test": "tsx tests/integration/tenant-integrity.ts"
   },
   "dependencies": {
     "next": "16.4.6",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "@prisma/adapter-pg": "7.9.1",
+    "@prisma/client": "7.9.1",
+    "pg": "^8.23.0",
+    "dotenv": "^17.2.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
@@ -27,6 +36,8 @@
     "@types/react-dom": "^19",
     "postcss": "^8.5.0",
     "tailwindcss": "4.3.5",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "prisma": "7.9.1",
+    "tsx": "^4.23.12"
   }
 }

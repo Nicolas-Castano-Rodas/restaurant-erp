@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String       @unique
+  currency    String       @default("COP") @db.VarChar(3)
+  timeZone    String       @default("America/Bogota")
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  branches    Branch[]
+  roles       Role[]
+  memberships Membership[]
+}
+
+model Branch {
+  id             String             @id @default(uuid()) @db.Uuid
+  organizationId String             @db.Uuid
+  name           String
+  code           String
+  address        String?
+  active         Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  assignments    MembershipBranch[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, code])
+}
+
+model User {
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique
+  name         String
+  passwordHash String?
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  memberships  Membership[]
+}
+
+model Role {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @db.Uuid
+  name           String
+  description    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  memberships    Membership[]
+  permissions    RolePermission[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, name])
+}
+
+model Permission {
+  code        String           @id
+  description String
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId         String     @db.Uuid
+  permissionCode String
+  role           Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission     Permission @relation(fields: [permissionCode], references: [code], onDelete: Restrict)
+
+  @@id([roleId, permissionCode])
+  @@index([permissionCode])
+}
+
+model Membership {
+  id             String             @id @default(uuid()) @db.Uuid
+  organizationId String             @db.Uuid
+  userId         String             @db.Uuid
+  roleId         String             @db.Uuid
+  active         Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  user           User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  role           Role               @relation(fields: [organizationId, roleId], references: [organizationId, id], onDelete: Restrict)
+  branches       MembershipBranch[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId, roleId])
+}
+
+model MembershipBranch {
+  organizationId String     @db.Uuid
+  membershipId   String     @db.Uuid
+  branchId       String     @db.Uuid
+  membership     Membership @relation(fields: [organizationId, membershipId], references: [organizationId, id], onDelete: Cascade)
+  branch         Branch     @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
+
+  @@id([membershipId, branchId])
+  @@index([organizationId, membershipId])
+  @@index([organizationId, branchId])
+}
