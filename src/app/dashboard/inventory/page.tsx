@@ -64,11 +64,11 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                 <p className="movement-form-ingredient">Ingrediente: {ingredient.name}</p>
                 <MovementTypeButtons />
                 <label className="movement-field">
-                  Cantidad ({unitLabel[ingredient.unit]})
+                  <span className="movement-field-label">{`Cantidad (${unitLabel[ingredient.unit]})`}</span>
                   <input name="quantity" type="number" min={ingredient.unit === "UNIT" ? "1" : "0.001"} step={ingredient.unit === "UNIT" ? "1" : "0.001"} required />
                 </label>
                 <label className="movement-field">
-                  Motivo
+                  <span className="movement-field-label">Motivo</span>
                   <textarea name="reason" required minLength={3} maxLength={500} rows={1} placeholder="Compra de materias primas..." />
                 </label>
                 <button type="submit" className="movement-submit">Registrar movimiento</button>
