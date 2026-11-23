@@ -26,8 +26,8 @@ export function listTables(db: PrismaClient, organizationId: string, branchId: s
   return db.restaurantTable.findMany({
     where: { organizationId, branchId },
     orderBy: { name: "asc" },
-    select: { id: true, name: true, capacity: true, active: true },
-  });
+    select: { id: true, name: true, capacity: true, active: true, orders: { where: { status: "OPEN" }, select: { id: true }, take: 1 } },
+  }).then((tables) => tables.map(({ orders, ...table }) => ({ ...table, occupied: orders.length > 0 })));
 }
 
 export function validPrice(value: string): boolean {

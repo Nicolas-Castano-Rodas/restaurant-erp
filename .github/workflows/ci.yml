@@ -71,6 +71,10 @@ jobs:
         env:
           RUN_DB_TESTS: "true"
         run: npm run catalog:test
+      - name: POS order integration test
+        env:
+          RUN_DB_TESTS: "true"
+        run: npm run orders:test
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
@@ -86,3 +90,5 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/catalog)" = "401"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/catalog)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/tables)" = "307"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/pos)" = "307"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/orders)" = "307"

@@ -6,7 +6,7 @@
 | 1 | Next.js, TypeScript, estilos, lint y CI | CI inicial superada; lockfile pendiente |
 | 2 | PostgreSQL, Prisma y modelo multiempresa | Migración y prueba de integridad superadas |
 | 3 | Autenticación, permisos y diseño visual | Acceso y dashboard validados; recuperación pendiente |
-| 4 | Catálogo, mesas y POS | Catálogo y mesas publicados; CI y POS pendientes |
+| 4 | Catálogo, mesas y POS | Catálogo y mesas validados; POS inicial publicado, CI pendiente; impuestos y descuentos pendientes |
 | 5 | Cocina, pagos y caja | Pendiente |
 | 6 | Inventario, recetas y compras | Pendiente |
 | 7 | Clientes, domicilios y analítica | Pendiente |

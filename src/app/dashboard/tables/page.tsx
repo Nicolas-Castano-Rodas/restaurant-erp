@@ -49,7 +49,7 @@ export default async function TablesPage({ searchParams }: { searchParams: Promi
               <TableIcon name={table.name} capacity={table.capacity} active={table.active} />
               <span className="text-base font-bold">{table.name}</span>
               <span className="text-sm text-muted">{table.capacity} personas</span>
-              <span className={table.active ? "rounded-lg bg-success-soft px-2 py-1 text-xs text-success" : "rounded-lg bg-neutral-soft px-2 py-1 text-xs text-neutral-status"}>{table.active ? "Habilitada" : "Inactiva"}</span>
+              <span className={table.occupied ? "rounded-lg bg-warning-soft px-2 py-1 text-xs text-warning" : table.active ? "rounded-lg bg-success-soft px-2 py-1 text-xs text-success" : "rounded-lg bg-neutral-soft px-2 py-1 text-xs text-neutral-status"}>{table.occupied ? "Ocupada" : table.active ? "Disponible" : "Inactiva"}</span>
             </summary>
             <div className="border-t border-line p-4"><TableForm scope={scope} table={table} /></div>
           </details>
@@ -62,7 +62,7 @@ export default async function TablesPage({ searchParams }: { searchParams: Promi
         </summary>
         <div className="border-t border-line p-4"><TableForm scope={scope} /></div>
       </details>
-      <p className="mt-3 text-xs text-muted">El estado indica habilitación administrativa, no ocupación en tiempo real. Selecciona una mesa para editarla.</p>
+      <p className="mt-3 text-xs text-muted">Ocupada: tiene un pedido abierto. Actualiza la página para consultar el estado actual. Selecciona una mesa para editarla.</p>
     </ModulePage>
   );
 }
