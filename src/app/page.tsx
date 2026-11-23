@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const modules = [
   {
     number: "01",
@@ -49,10 +51,11 @@ export default function Home() {
             </span>
             <span>Restaurant <span className="text-brand">ERP</span></span>
           </a>
-          <nav aria-label="Navegación principal">
+          <nav aria-label="Navegación principal" className="flex items-center gap-4">
             <a className="text-sm font-semibold text-muted hover:text-brand" href="#modulos">
               Módulos
             </a>
+            <Link href="/login" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-hover">Ingresar</Link>
           </nav>
         </div>
       </header>

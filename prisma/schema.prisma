@@ -46,6 +46,7 @@ model User {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   memberships  Membership[]
+  sessions     Session[]
 }
 
 model Role {
@@ -108,4 +109,25 @@ model MembershipBranch {
   @@id([membershipId, branchId])
   @@index([organizationId, membershipId])
   @@index([organizationId, branchId])
+}
+
+model Session {
+  tokenHash    String   @id @db.VarChar(64)
+  userId       String   @db.Uuid
+  membershipId String?  @db.Uuid
+  branchId     String?  @db.Uuid
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model LoginAttempt {
+  key       String   @id @db.VarChar(64)
+  count     Int      @default(1)
+  expiresAt DateTime
+
+  @@index([expiresAt])
 }

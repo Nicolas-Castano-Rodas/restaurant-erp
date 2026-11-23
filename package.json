@@ -17,7 +17,10 @@
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:test": "tsx tests/integration/tenant-integrity.ts"
+    "db:test": "tsx tests/integration/tenant-integrity.ts",
+    "auth:provision": "tsx scripts/provision-owner.ts",
+    "auth:test": "tsx tests/integration/auth.ts",
+    "auth:cleanup": "tsx scripts/cleanup-auth.ts"
   },
   "dependencies": {
     "next": "16.4.6",
