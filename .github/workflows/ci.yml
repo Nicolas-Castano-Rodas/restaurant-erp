@@ -1,0 +1,50 @@
+name: Application CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Install dependencies
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+      - name: Preserve generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-lockfile
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 7
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - name: HTTP smoke test
+        shell: bash
+        run: |
+          npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/restaurant-erp.log 2>&1 &
+          trap 'cat /tmp/restaurant-erp.log' EXIT
+          curl --fail --silent --show-error --retry 10 --retry-delay 2 --retry-connrefused http://127.0.0.1:3000/api/health | grep '"status":"ok"'
+          curl --fail --silent --show-error http://127.0.0.1:3000/ > /dev/null
