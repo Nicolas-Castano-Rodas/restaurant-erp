@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FoodIcon } from "@/components/workspace/operation-icons";
+import { FoodIcon, TableIcon } from "@/components/workspace/operation-icons";
 import { submitOrder } from "./actions";
 import { toMinor } from "./money";
 
@@ -13,12 +13,13 @@ type CartLine = { key: string; productId: string; variantId: string | null; name
 type Channel = "DINE_IN" | "TAKEAWAY" | "DELIVERY";
 const channels: { id: Channel; name: string }[] = [{ id: "DINE_IN", name: "En mesa" }, { id: "TAKEAWAY", name: "Para llevar" }, { id: "DELIVERY", name: "Domicilio" }];
 
-export function PosTerminal({ products, tables, currency, scope, initialRequestId }: { products: Product[]; tables: { id: string; name: string }[]; currency: string; scope: string; initialRequestId: string }) {
+export function PosTerminal({ products, tables, currency, scope, initialRequestId, initialTableId }: { products: Product[]; tables: { id: string; name: string; capacity: number; active: boolean; occupied: boolean }[]; currency: string; scope: string; initialRequestId: string; initialTableId: string }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [channel, setChannel] = useState<Channel>("DINE_IN");
-  const [tableId, setTableId] = useState("");
+  const [tableId, setTableId] = useState(initialTableId);
+  const selectedTable = tables.find((table) => table.id === tableId && table.active && !table.occupied);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [note, setNote] = useState("");
   const [requestId, setRequestId] = useState(initialRequestId);
@@ -39,7 +40,7 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
     setResult(null);
   }
   function save() {
-    if (!cart.length || (channel === "DINE_IN" && !tableId) || pending) return;
+    if (!cart.length || (channel === "DINE_IN" && !selectedTable) || pending) return;
     setResult(null);
     startTransition(async () => {
       try {
@@ -83,8 +84,25 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
         <fieldset disabled={pending} className="space-y-3">
           <legend className="mb-2 text-xs font-semibold text-muted">Tipo de servicio</legend>
           <div className="grid grid-cols-3 gap-1">{channels.map((item) => <button type="button" key={item.id} aria-pressed={channel === item.id} onClick={() => { setChannel(item.id); setTableId(""); }} className={channel === item.id ? "min-h-11 rounded-lg bg-ink p-2 text-xs font-semibold text-white" : "min-h-11 rounded-lg border border-line p-2 text-xs font-semibold text-muted"}>{item.name}</button>)}</div>
-          {channel === "DINE_IN" && <label className="block text-xs text-muted">Mesa disponible<select value={tableId} onChange={(event) => setTableId(event.target.value)} className="mt-2 w-full rounded-lg border border-line bg-surface p-3 text-sm"><option value="">Seleccionar mesa</option>{tables.map((table) => <option key={table.id} value={table.id}>{table.name}</option>)}</select></label>}
-          {channel === "DINE_IN" && !tables.length && <p className="text-xs text-warning">No hay mesas habilitadas y libres.</p>}
+          {channel === "DINE_IN" && <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold text-muted">Selecciona una mesa</p>
+              <button type="button" onClick={() => router.refresh()} className="text-xs font-semibold text-brand underline">Actualizar</button>
+            </div>
+            <div className="grid max-h-72 grid-cols-2 gap-2 overflow-auto">
+              {tables.map((table) => {
+                const disabled = !table.active || table.occupied;
+                return <button key={table.id} type="button" disabled={disabled} aria-pressed={selectedTable?.id === table.id} onClick={() => setTableId(table.id)} className={selectedTable?.id === table.id ? "flex flex-col items-center rounded-xl border-2 border-brand bg-brand-soft p-2 text-center" : "flex flex-col items-center rounded-xl border border-line bg-surface p-2 text-center disabled:cursor-not-allowed disabled:bg-neutral-soft"}>
+                  <TableIcon name={table.name} capacity={table.capacity} active={table.active} occupied={table.occupied} />
+                  <span className="text-sm font-semibold">{table.name}</span>
+                  <span className={table.occupied ? "text-xs text-warning" : table.active ? "text-xs text-success" : "text-xs text-muted"}>{table.occupied ? "Ocupada" : table.active ? "Disponible" : "Inactiva"}</span>
+                </button>;
+              })}
+            </div>
+            {!tables.length && <p className="rounded-lg bg-warning-soft p-3 text-xs text-warning">No tienes mesas registradas. <Link href="/dashboard/tables" className="font-semibold underline">Crear una mesa</Link>.</p>}
+            {tables.length > 0 && !tables.some((table) => table.active && !table.occupied) && <p className="rounded-lg bg-warning-soft p-3 text-xs text-warning">No hay mesas libres. Revisa los pedidos abiertos o habilita una mesa. <Link href="/dashboard/tables" className="font-semibold underline">Administrar mesas</Link>.</p>}
+            {selectedTable && <p className="rounded-lg bg-success-soft p-2 text-xs font-semibold text-success">Mesa seleccionada: {selectedTable.name}</p>}
+          </div>}
           <div className="divide-y divide-line border-y border-line">
             {cart.map((line) => <div key={line.key} className="py-3"><p className="text-sm font-semibold">{line.name}</p><div className="mt-2 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><button type="button" aria-label={`Reducir ${line.name}`} onClick={() => changeQuantity(line.key, -1)} className="size-11 rounded-lg border border-line">−</button><span className="min-w-5 text-center text-sm tabular-nums">{line.quantity}</span><button type="button" aria-label={`Aumentar ${line.name}`} onClick={() => changeQuantity(line.key, 1)} className="size-11 rounded-lg border border-line">+</button></div><span className="text-sm font-semibold tabular-nums">{money(toMinor(line.price) * BigInt(line.quantity))}</span></div></div>)}
             {!cart.length && <p className="py-5 text-sm text-muted">Agrega productos para comenzar.</p>}
@@ -93,7 +111,7 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
         </fieldset>
         <div className="mt-4 flex items-center justify-between border-t border-line pt-4"><span className="font-semibold">Total estimado</span><span className="text-xl font-bold tabular-nums">{money(total)}</span></div>
         <p className="mt-2 text-xs text-muted">El servidor valida precios y disponibilidad. Sin impuestos ni descuentos adicionales en esta versión.</p>
-        <button type="button" onClick={save} disabled={pending || !cart.length || (channel === "DINE_IN" && !tableId)} className="mt-4 min-h-12 w-full rounded-lg bg-brand px-4 py-3 font-semibold text-white hover:bg-brand-hover disabled:opacity-50">{pending ? "Registrando..." : "Registrar pedido"}</button>
+        <button type="button" onClick={save} disabled={pending || !cart.length || (channel === "DINE_IN" && !selectedTable)} className="mt-4 min-h-12 w-full rounded-lg bg-brand px-4 py-3 font-semibold text-white hover:bg-brand-hover disabled:opacity-50">{pending ? "Registrando..." : "Registrar pedido"}</button>
         {result && ("error" in result ? <p role="alert" className="mt-3 rounded-lg bg-danger-soft p-3 text-sm text-danger">{result.error}</p> : <output className="mt-3 block rounded-lg bg-success-soft p-3 text-sm text-success">Pedido registrado. <Link href="/dashboard/orders" className="font-semibold underline">Consultar pedidos</Link></output>)}
       </section>
     </div>

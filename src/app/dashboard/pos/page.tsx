@@ -6,8 +6,9 @@ import { requireWorkspace } from "@/modules/auth/workspace";
 import { listCatalog, listTables } from "@/modules/catalog/service";
 import { PosTerminal } from "@/modules/orders/pos-terminal";
 
-export default async function PosPage() {
+export default async function PosPage({ searchParams }: { searchParams: Promise<{ table?: string }> }) {
   const context = await requireWorkspace("orders.manage");
+  const { table } = await searchParams;
   const db = getPrisma();
   const [categories, tables] = await Promise.all([
     listCatalog(db, context.organization.id, true),
@@ -24,7 +25,7 @@ export default async function PosPage() {
         <Link href="/dashboard/orders" className="hover:underline">Consultar pedidos →</Link>
         <Link href="/dashboard/tables" className="hover:underline">Ver mesas →</Link>
       </div>
-      <PosTerminal key={`${context.organization.id}:${context.branch.id}`} products={products} tables={tables.filter((table) => table.active && !table.occupied)} currency={context.organization.currency} scope={`${context.organization.id}:${context.branch.id}`} initialRequestId={randomUUID()} />
+      <PosTerminal key={`${context.organization.id}:${context.branch.id}:${table ?? ""}`} products={products} tables={tables} initialTableId={tables.find((entry) => entry.id === table && entry.active && !entry.occupied)?.id ?? ""} currency={context.organization.currency} scope={`${context.organization.id}:${context.branch.id}`} initialRequestId={randomUUID()} />
     </ModulePage>
   );
 }

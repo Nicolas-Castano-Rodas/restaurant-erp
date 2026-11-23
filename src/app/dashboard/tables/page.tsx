@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { buttonStyle, FormFeedback, inputStyle, ModulePage } from "@/components/workspace/module-page";
 import { EditIcon, TableIcon } from "@/components/workspace/operation-icons";
 import { getPrisma } from "@/lib/prisma";
@@ -51,7 +52,7 @@ export default async function TablesPage({ searchParams }: { searchParams: Promi
               <span className="text-sm text-muted">{table.capacity} personas</span>
               <span className={table.occupied ? "rounded-lg bg-warning-soft px-2 py-1 text-xs text-warning" : table.active ? "rounded-lg bg-success-soft px-2 py-1 text-xs text-success" : "rounded-lg bg-neutral-soft px-2 py-1 text-xs text-neutral-status"}>{table.occupied ? "Ocupada" : table.active ? "Disponible" : "Inactiva"}</span>
             </summary>
-            <div className="border-t border-line p-4"><TableForm scope={scope} table={table} /></div>
+            <div className="space-y-3 border-t border-line p-4">{table.active && !table.occupied && <Link href={`/dashboard/pos?table=${table.id}`} className="block rounded-lg bg-brand px-3 py-3 text-center text-sm font-semibold text-white hover:bg-brand-hover">Tomar pedido</Link>}{table.occupied && <Link href="/dashboard/orders" className="block rounded-lg bg-warning-soft px-3 py-3 text-center text-sm font-semibold text-warning">Consultar pedido abierto</Link>}<TableForm scope={scope} table={table} /></div>
           </details>
         ))}
       </div>

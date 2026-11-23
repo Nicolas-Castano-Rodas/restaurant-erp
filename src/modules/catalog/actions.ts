@@ -18,6 +18,7 @@ function fail(path: string): never {
 }
 function finish(path: string): never {
   revalidatePath(path);
+  revalidatePath("/dashboard/pos");
   redirect(`${path}?saved=1`);
 }
 
