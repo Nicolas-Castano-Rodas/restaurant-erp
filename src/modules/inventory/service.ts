@@ -46,9 +46,11 @@ export function createIngredient(db: PrismaClient, scope: Scope, nameInput: stri
   }, { isolationLevel: "Serializable" });
 }
 
-export function configureBalance(db: PrismaClient, scope: Scope, ingredientId: string, minimumInput: string) {
+export function configureBalance(db: PrismaClient, scope: Scope, ingredientId: string, minimumInput: string, costInput?: string) {
   if (!uuid.test(ingredientId)) throw new InventoryError("Ingrediente inválido.");
   const minimum = toMilli(minimumInput);
+  if (costInput !== undefined && costInput !== "" && !/^\d{1,10}(\.\d{1,2})?$/.test(costInput)) throw new InventoryError("Costo inválido: máximo dos decimales.");
+  const cost = costInput === undefined ? {} : { unitCost: costInput === "" ? null : costInput };
   const { organizationId, branchId } = scope;
   return db.$transaction(async (tx) => {
     await authorize(tx, scope);
@@ -56,7 +58,7 @@ export function configureBalance(db: PrismaClient, scope: Scope, ingredientId: s
     if (!ingredient) throw new InventoryError("Ingrediente no disponible.");
     checkUnit(ingredient.unit, minimum);
     const key = { organizationId, branchId, ingredientId };
-    return tx.inventoryBalance.upsert({ where: { organizationId_branchId_ingredientId: key }, create: { ...key, minimum: fromMilli(minimum) }, update: { minimum: fromMilli(minimum) } });
+    return tx.inventoryBalance.upsert({ where: { organizationId_branchId_ingredientId: key }, create: { ...key, minimum: fromMilli(minimum), ...cost }, update: { minimum: fromMilli(minimum), ...cost } });
   }, { isolationLevel: "Serializable" });
 }
 
@@ -89,8 +91,8 @@ export function recordMovement(db: PrismaClient, scope: Scope, input: { ingredie
 
 export async function inventoryOverview(db: PrismaClient, organizationId: string, branchId: string) {
   const [ingredients, movements] = await Promise.all([
-    db.ingredient.findMany({ where: { organizationId, active: true }, orderBy: { name: "asc" }, select: { id: true, name: true, unit: true, balances: { where: { organizationId, branchId }, select: { quantity: true, minimum: true } } } }),
-    db.stockMovement.findMany({ where: { organizationId, branchId }, orderBy: { createdAt: "desc" }, take: 50, select: { id: true, kind: true, quantity: true, balanceAfter: true, reason: true, createdAt: true, balance: { select: { ingredient: { select: { name: true, unit: true } } } }, membership: { select: { user: { select: { name: true } } } } } }),
+    db.ingredient.findMany({ where: { organizationId, active: true }, orderBy: { name: "asc" }, select: { id: true, name: true, unit: true, balances: { where: { organizationId, branchId }, select: { quantity: true, minimum: true, unitCost: true } } } }),
+    db.stockMovement.findMany({ where: { organizationId, branchId }, orderBy: { createdAt: "desc" }, take: 50, select: { id: true, kind: true, quantity: true, balanceAfter: true, reason: true, orderId: true, unitCost: true, createdAt: true, balance: { select: { ingredient: { select: { name: true, unit: true } } } }, membership: { select: { user: { select: { name: true } } } } } }),
   ]);
   return { ingredients, movements };
 }

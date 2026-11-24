@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { ModulePage, inputStyle, buttonStyle } from "@/components/workspace/module-page";
 import { MovementIcon } from "@/components/workspace/operation-icons";
@@ -26,6 +27,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   return <ModulePage title="Inventario" subtitle={`${context.organization.name} · ${context.branch.name}`}>
     {error && <p role="alert" className="mb-3 rounded-lg bg-danger-soft p-3 text-sm text-danger">{error}</p>}
     {saved && <output className="mb-3 block rounded-lg bg-success-soft p-3 text-sm text-success">Movimiento o configuración guardados.</output>}
+    <Link href="/dashboard/recipes" className="mb-3 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">Gestionar recetas y costos →</Link>
     <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
       {[{ label: "Ingredientes en sucursal", value: configured.length, color: "text-ink" }, { label: "Stock bajo", value: low, color: "text-warning" }, { label: "Agotados", value: empty, color: "text-danger" }].map((item) => <section key={item.label} className="reference-card p-4"><h2 className="text-xs text-muted">{item.label}</h2><p className={`mt-1 text-3xl font-semibold tabular-nums ${item.color}`}>{item.value}</p></section>)}
     </div>
@@ -74,11 +76,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                 <button type="submit" className="movement-submit">Registrar movimiento</button>
               </form>}
               <details className="reference-disclosure rounded-xl border border-line bg-surface">
-                <summary className="cursor-pointer rounded-xl px-4 py-3 text-sm font-semibold text-brand">{balance ? "Configurar stock mínimo" : "Habilitar ingrediente en sucursal"}</summary>
+                <summary className="cursor-pointer rounded-xl px-4 py-3 text-sm font-semibold text-brand">{balance ? "Configurar stock mínimo y costo" : "Habilitar ingrediente en sucursal"}</summary>
               <form action={manageInventory} className="flex flex-wrap items-end gap-3 border-t border-line p-4">
                 <input type="hidden" name="scope" value={scope} /><input type="hidden" name="operation" value="configure" /><input type="hidden" name="ingredientId" value={ingredient.id} />
                 <label className="min-w-0 flex-1 text-xs text-muted">Stock mínimo<input name="minimum" type="number" min="0" step={ingredient.unit === "UNIT" ? "1" : "0.001"} required defaultValue={balance?.minimum.toString() ?? "0"} className={inputStyle} /></label>
-                <button type="submit" className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand">{balance ? "Guardar mínimo" : "Habilitar en sucursal"}</button>
+                <label className="min-w-0 flex-1 text-xs text-muted">Costo por {unitLabel[ingredient.unit]} ({context.organization.currency})<input name="unitCost" type="number" min="0" step="0.01" max="9999999999.99" defaultValue={balance?.unitCost?.toString() ?? ""} placeholder="Sin costo definido" className={inputStyle} /></label>
+                <button type="submit" className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand">{balance ? "Guardar configuración" : "Habilitar en sucursal"}</button>
               </form>
               </details>
             </div>
@@ -107,7 +110,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               <dl className="mb-4 grid gap-3 rounded-lg bg-canvas p-3 text-xs text-muted sm:grid-cols-3">
                 <div><dt>Responsable</dt><dd className="mt-1 break-words font-semibold text-ink">{movement.membership.user.name}</dd></div>
                 <div><dt>Fecha</dt><dd className="mt-1 font-semibold text-ink">{movement.createdAt.toLocaleString("es-CO", { timeZone: context.organization.timeZone })}</dd></div>
-                <div><dt>Saldo resultante</dt><dd className="mt-1 font-semibold text-ink">{number.format(Number(movement.balanceAfter))} {unit}</dd></div>
+                <div><dt>Saldo resultante</dt><dd className="mt-1 font-semibold text-ink">{number.format(Number(movement.balanceAfter))} {unit}</dd></div>{movement.orderId && <div><dt>Pedido asociado</dt><dd className="mt-1 font-semibold text-ink">#{movement.orderId.slice(0, 8).toUpperCase()}</dd></div>}{movement.unitCost !== null && <div><dt>Costo unitario registrado</dt><dd className="mt-1 font-semibold text-ink">{movement.unitCost.toFixed(2)} {context.organization.currency}</dd></div>}
               </dl>
             </details>
           );
@@ -116,6 +119,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       </div>
       {movements.length > 0 && <p className="border-t border-[#e2e2e2] pt-3 text-xs text-muted">Selecciona un movimiento para consultar su detalle.</p>}
     </section>
-    <p className="mt-3 text-xs text-muted">Las ventas todavía no descuentan ingredientes automáticamente. Las recetas y el consumo asociado a cocina se incorporarán en la siguiente etapa.</p>
+    <p className="mt-3 text-xs text-muted">Al iniciar la preparación se descuentan los ingredientes de las recetas configuradas. Los productos sin receta no generan consumo automático.</p>
   </ModulePage>;
 }

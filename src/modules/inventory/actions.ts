@@ -20,7 +20,7 @@ export async function manageInventory(form: FormData) {
       if (unit !== "KG" && unit !== "G" && unit !== "L" && unit !== "ML" && unit !== "UNIT") throw new InventoryError("Selecciona una unidad.");
       await createIngredient(db, scope, field("name"), unit, field("minimum"));
     } else if (operation === "configure") {
-      await configureBalance(db, scope, field("ingredientId"), field("minimum"));
+      await configureBalance(db, scope, field("ingredientId"), field("minimum"), form.has("unitCost") ? field("unitCost") : undefined);
     } else if (operation === "movement") {
       const kind = field("kind");
       if (kind !== "ENTRY" && kind !== "EXIT" && kind !== "WASTE") throw new InventoryError("Tipo de movimiento inválido.");

@@ -20,7 +20,8 @@ export default async function KitchenPage({ searchParams }: { searchParams: Prom
   const scope = `${context.organization.id}:${context.branch.id}`;
   return (
     <ModulePage title="Cocina" subtitle={`${context.organization.name} · ${context.branch.name}`}>
-      <FormFeedback {...feedback} />
+      <FormFeedback saved={feedback.saved} />
+      {feedback.error && <p role="alert" className="mb-3 rounded-lg bg-danger-soft p-3 text-sm text-danger">{feedback.error === "1" ? "No se pudo actualizar la comanda." : feedback.error}</p>}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-semibold">{orders.length} comandas activas</p>
         <LiveRefresh />

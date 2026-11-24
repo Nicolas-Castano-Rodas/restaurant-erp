@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/prisma";
 import { requireWorkspace } from "@/modules/auth/workspace";
+import { InventoryError } from "@/modules/inventory/service";
 import { advanceKitchen } from "./service";
 
 export async function moveKitchenOrder(form: FormData) {
@@ -14,12 +15,14 @@ export async function moveKitchenOrder(form: FormData) {
   if (scope !== `${context.organization.id}:${context.branch.id}` || typeof id !== "string" ||
     (expected !== "PENDING" && expected !== "PREPARING" && expected !== "READY")) redirect("/dashboard/kitchen?error=1");
   let changed = false;
+  let message = "";
   try {
     changed = await advanceKitchen(getPrisma(), { organizationId: context.organization.id, branchId: context.branch.id, membershipId: context.membershipId }, id, expected);
-  } catch {
-    changed = false;
+  } catch (error) {
+    message = error instanceof InventoryError ? error.message : "No se pudo actualizar la comanda. Actualiza e intenta nuevamente.";
   }
   revalidatePath("/dashboard/kitchen");
   revalidatePath("/dashboard/orders");
-  redirect(changed ? "/dashboard/kitchen?saved=1" : "/dashboard/kitchen?error=1");
+  revalidatePath("/dashboard/inventory");
+  redirect(changed ? "/dashboard/kitchen?saved=1" : `/dashboard/kitchen?error=${encodeURIComponent(message || "La comanda cambió. Actualiza la página.")}`);
 }

@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@/generated/prisma/client";
+import { consumeRecipeIngredients } from "@/modules/recipes/service";
 
 type Scope = { organizationId: string; branchId: string; membershipId: string };
 type Status = "PENDING" | "PREPARING" | "READY" | "SERVED";
@@ -31,6 +32,8 @@ export async function advanceKitchen(db: PrismaClient, scope: Scope, orderId: st
       where: { id: orderId, organizationId, branchId, status: "OPEN", kitchenStatus: expected },
       data: { kitchenStatus: target, ...(target === "PREPARING" ? { preparingAt: now } : target === "READY" ? { readyAt: now } : { servedAt: now }) },
     });
-    return result.count === 1;
+    if (result.count !== 1) return false;
+    if (target === "PREPARING") await consumeRecipeIngredients(tx, scope, orderId);
+    return true;
   }, { isolationLevel: "Serializable" });
 }
