@@ -39,8 +39,11 @@ jobs:
           node-version-file: .nvmrc
       - name: Resolve candidate dependency versions
         run: |
-          npm pkg set "dependencies.@prisma/client=7.10.1" "dependencies.@prisma/adapter-pg=7.10.1" "devDependencies.prisma=7.10.1" "overrides.exceljs.uuid=11.1.1"
+          npm pkg set "dependencies.@prisma/client=7.10.1" "dependencies.@prisma/adapter-pg=7.10.1" "devDependencies.prisma=7.10.1" "overrides.exceljs.uuid=11.1.1" "overrides.@prisma/config.effect=^3.22.1"
           npm install --package-lock-only --ignore-scripts
+      - name: Verify candidate dependency graph
+        run: |
+          node -e 'const lock = require("./package-lock.json"); for (const [path, pkg] of Object.entries(lock.packages)) { if (/(^|\/)node_modules\/(effect|uuid|deepmerge-ts|mysql2|prisma)$/.test(path)) console.log(path, pkg.version); }'
       - name: Preserve candidate manifests
         uses: actions/upload-artifact@v4
         with:
