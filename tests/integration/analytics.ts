@@ -2,6 +2,10 @@ import "dotenv/config";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { getPrisma } from "../../src/lib/prisma";
+import ExcelJS from "exceljs";
+import { PDFDocument } from "pdf-lib";
+import { buildReport } from "../../src/modules/reports/service";
+import { renderExcel, renderPdf } from "../../src/modules/reports/render";
 import { analyticsOverview, reportRange } from "../../src/modules/analytics/service";
 
 async function main() {
@@ -46,7 +50,24 @@ async function main() {
     assert.equal((await analyticsOverview(db, reportScope, range)).summary.costedOrders, 0);
     assert.equal(reportRange("America/Bogota", "2026-02-30", "2026-11-24", time).invalid, true);
     assert.equal(reportRange("America/Bogota", undefined, undefined, time).to, "2026-11-24");
-    console.log("Analytics scope, payment, date boundary and cost coverage checks passed.");
+    const exportScope = { ...reportScope, organization: "Restaurante de prueba", branch: "Principal" };
+    // Fixed fixture date is in the past when this version runs.
+    for (const type of ["sales", "inventory", "purchases", "cash", "products"] as const) {
+      const exported = await buildReport(db, exportScope, type, range);
+      const workbook = new ExcelJS.Workbook();
+      const xlsx = await renderExcel(exported);
+      assert.equal(String.fromCharCode(...xlsx.slice(0, 2)), "PK");
+      await workbook.xlsx.load(xlsx.buffer as Parameters<typeof workbook.xlsx.load>[0]);
+      assert.equal(workbook.worksheets.length, exported.tables.length + 1);
+      const pdf = await PDFDocument.load(await renderPdf(exported));
+      assert.ok(pdf.getPageCount() >= 1);
+    }
+    const sales = await buildReport(db, exportScope, "sales", range);
+    assert.equal(sales.tables[4].rows.length, 1);
+    assert.equal(Number(sales.tables[4].rows[0][6]), 24000);
+    const empty = await buildReport(db, { ...exportScope, branchId: other.id }, "sales", range);
+    assert.equal(empty.tables[4].rows.length, 0);
+    console.log("Analytics and report formats, scope, payment, date boundary and cost coverage checks passed.");
   } finally {
     try {
       await db.stockMovement.deleteMany({ where });

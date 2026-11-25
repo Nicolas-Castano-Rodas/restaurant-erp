@@ -1,0 +1,9 @@
+# Reportes empresariales
+
+/dashboard/reports y /api/reports requieren reports.read. La API obtiene organización y sucursal de la sesión, verifica que coincidan con el contexto de la página, valida tipo/formato/fechas y devuelve una descarga privada sin caché. No hay exportación pública. Reportes XLSX reales (ExcelJS) y PDF paginado (pdf-lib); no se crean archivos persistentes en servidor. XLSX tiene hoja de información, encabezados, filtros y una hoja por tabla; valores numéricos con más de 15 dígitos se conservan como texto. No se escriben fórmulas desde datos de usuario. PDF usa fuentes estándar y reemplaza caracteres incompatibles con ?; Excel conserva el original.
+
+Tipos: ventas y pagos (resumen según analítica, detalle por fecha de pago), inventario (saldo actual y movimientos del período), compras y proveedores (órdenes por fecha de creación, estado actual y líneas), caja (turnos cerrados durante el período y pagos de todo el turno), productos y costos (top 10, costos históricos y diferencia parcial). Las fechas se interpretan en la zona horaria de la organización. Ventas y productos filtran moneda actual y muestran pagos de otra moneda excluidos; compras y caja identifican moneda por registro. Los reportes evitan contactos de clientes y proveedores, responsables y texto libre. El detalle de ventas se consulta después del resumen, por lo que operaciones concurrentes pueden causar una diferencia momentánea; otros reportes detallados usan un snapshot Repeatable Read.
+
+Límite de 90 días y 2.000 filas por tabla, sin truncamiento silencioso; el exceso devuelve 422. El ranking top 10 es intencional. Documentos internos, no facturas ni estados contables. Los costos no representan utilidad neta.
+
+Instalar dependencias con npm install. No se requiere migración adicional. CI abre los archivos generados con ExcelJS y pdf-lib, comprueba ventas y aislamiento y prueba acceso HTTP sin sesión.

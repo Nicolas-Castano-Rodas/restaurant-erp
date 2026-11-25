@@ -124,3 +124,5 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/customers)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/deliveries)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/analytics)" = "307"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/reports)" = "307"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/reports)" = "401"

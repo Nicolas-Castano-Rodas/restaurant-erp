@@ -26,6 +26,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     { name: "Ingresos de envío", value: money(summary.shipping), hint: "Incluidos en ingresos", color: "text-brand" },
   ];
   return <ModulePage title="Analítica de ventas" subtitle={`${context.organization.name} · ${context.branch.name} · ${currency}`}>
+    <Link href={`/dashboard/reports?from=${range.from}&to=${range.to}`} className="mb-3 inline-block rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white">Exportar reportes →</Link>
     <section className="reference-card mb-3 p-4">
       <form method="get" className="flex flex-wrap items-end gap-3">
         <label className="min-w-0 flex-1 text-sm text-muted">Desde<input type="date" name="from" defaultValue={range.from} required className={inputStyle} /></label>

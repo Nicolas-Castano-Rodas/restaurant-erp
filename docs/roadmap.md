@@ -9,7 +9,7 @@
 | 4 | Catálogo, mesas y POS | Catálogo, mesas y POS inicial validados; selector visual actualizado; impuestos y descuentos pendientes |
 | 5 | Cocina, pagos y caja | Cocina, caja y pagos iniciales validados; devoluciones pendientes |
 | 6 | Inventario, recetas y compras | Inventario y recetas validados; compras y recepción completas validadas; devoluciones y compras parciales pendientes |
-| 7 | Clientes, domicilios y analítica | Clientes validados; domicilios y analítica publicados; validación final y exportaciones pendientes |
+| 7 | Clientes, domicilios y analítica | Clientes, domicilios y analítica validados; exportaciones XLSX/PDF publicadas, CI pendiente |
 | 8 | Auditoría, pruebas, accesibilidad y rendimiento | Pendiente |
 | 9 | Despliegue, demo y materiales de lanzamiento | Pendiente |
 
