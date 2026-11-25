@@ -3,15 +3,15 @@
 | Fase | Entregable | Estado |
 | --- | --- | --- |
 | 0 | Identidad, requisitos y arquitectura inicial | Documentación inicial |
-| 1 | Next.js, TypeScript, estilos, lint y CI | CI inicial superada; lockfile pendiente |
+| 1 | Next.js, TypeScript, estilos, lint y CI | CI y lockfile versionado; npm ci verificado |
 | 2 | PostgreSQL, Prisma y modelo multiempresa | Migración y prueba de integridad superadas |
 | 3 | Autenticación, permisos y diseño visual | Acceso y dashboard validados; recuperación pendiente |
 | 4 | Catálogo, mesas y POS | Catálogo, mesas y POS inicial validados; selector visual actualizado; impuestos y descuentos pendientes |
 | 5 | Cocina, pagos y caja | Cocina, caja y pagos iniciales validados; devoluciones pendientes |
 | 6 | Inventario, recetas y compras | Inventario y recetas validados; compras y recepción completas validadas; devoluciones y compras parciales pendientes |
 | 7 | Clientes, domicilios y analítica | Clientes, domicilios y analítica validados; exportaciones XLSX/PDF pasan integración; corrección de lint publicada |
-| 8 | Auditoría, pruebas, accesibilidad y rendimiento | Administración, auditoría, seguridad y rendimiento validados; contraste, integración, lint, tipos, build y HTTP superados; corregido cargador ESM de pruebas E2E, nueva validación pendiente |
-| 9 | Despliegue, demo y materiales de lanzamiento | Configuración, demo local y materiales preparados; despliegue real, capturas y publicación pendientes |
+| 8 | Auditoría, pruebas, accesibilidad y rendimiento | Integración, contraste, lint, tipos, build, HTTP y 2 pruebas Chromium superados en e7d786d; puerta de vulnerabilidades altas y nuevas pruebas de recuperación/contenedor pendientes |
+| 9 | Despliegue, demo y materiales de lanzamiento | Configuración, demo local y materiales preparados; validación de contenedor y recuperación en CI añadida; seguridad de dependencias, despliegue real, capturas y publicación pendientes |
 
 ## Definición de terminado
 Código revisado, lint y tipos correctos, pruebas aplicables superadas, documentación actualizada, sin secretos ni datos personales reales. Las funcionalidades se anuncian como disponibles únicamente después de verificar su funcionamiento.

@@ -14,3 +14,6 @@ Gestión multiempresa y multisucursal, autenticación, roles, catálogo, POS, me
 
 ## Limitaciones
 No incluye facturación electrónica, procesamiento bancario, reembolsos, GPS en vivo, MFA ni recuperación de contraseña. No es una solución fiscal o contable certificada. La demo y las pruebas no se ejecutan contra datos reales.
+
+## Validación de referencia
+[e7d786d, CI 45688669694](https://github.com/Nicolas-Castano-Rodas/restaurant-erp/actions/runs/45688669694): instalación bloqueada por lockfile, integración, accesibilidad parcial, lint, tipos, build, HTTP y navegador superados. El informe informativo detectó vulnerabilidades altas; el candidato no está aprobado para publicación comercial. Los controles adicionales de dependencias, imagen y restauración se verifican en nuevas ejecuciones.

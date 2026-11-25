@@ -17,7 +17,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     services:
       postgres:
         image: postgres:16
@@ -39,24 +39,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - name: Install dependencies
-        shell: bash
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-      - name: Runtime dependency vulnerability report
-        continue-on-error: true
-        run: npm audit --omit=dev --audit-level=high
-      - name: Preserve generated lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-lockfile
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 7
+      - name: Install locked dependencies
+        run: npm ci
       - name: Generate client without database credentials
         run: env -u DATABASE_URL npm run db:generate
       - run: npm run db:validate
@@ -144,3 +128,34 @@ jobs:
         env:
           RUN_BROWSER_TESTS: "true"
         run: npm run test:e2e
+
+      - name: Restore synthetic database backup and compare records
+        shell: bash
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          bash scripts/ci-restore-check.sh
+      - name: Build production container without database credentials
+        run: docker build -t restaurant-erp-ci .
+      - name: Verify production container and database readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(docker image inspect restaurant-erp-ci --format '{{.Config.User}}')" = "node"
+          docker run -d --name restaurant-erp-ci --network host --env DATABASE_URL restaurant-erp-ci node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3200
+          trap 'docker logs restaurant-erp-ci; docker rm -f restaurant-erp-ci' EXIT
+          curl -fsS --retry 20 --retry-delay 2 --retry-connrefused http://127.0.0.1:3200/api/health | grep '"status":"ok"'
+          curl -fsS http://127.0.0.1:3200/api/ready | grep '"status":"ready"'
+          curl -fsS http://127.0.0.1:3200/login | grep -q 'Iniciar sesión'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3200/dashboard)" = "307"
+  dependency-security:
+    name: Release security gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Audit locked production and build dependencies
+        run: npm audit --audit-level=high

@@ -35,13 +35,13 @@ Requisitos: Git, Node.js 24, npm y PostgreSQL. Crear una base dedicada nueva, co
 ```bash
 git clone https://github.com/Nicolas-Castano-Rodas/restaurant-erp.git
 cd restaurant-erp
-npm install
+npm ci
 npm run db:deploy
 npm run auth:provision
 npm run dev
 ```
 
-Visitar http://localhost:3000 y usar la cuenta creada. No existen credenciales predeterminadas. Para una actualización detener el servidor, ejecutar git pull --ff-only origin main, npm install si cambian dependencias, npm run db:deploy si hay nuevas migraciones y npm run dev. No borrar .next de rutina.
+Visitar http://localhost:3000 y usar la cuenta creada. No existen credenciales predeterminadas. Para una actualización detener el servidor, ejecutar git pull --ff-only origin main, npm ci si cambian dependencias, npm run db:deploy si hay nuevas migraciones y npm run dev. No borrar .next de rutina.
 
 ## Calidad y despliegue
 
@@ -52,7 +52,7 @@ npm run typecheck
 npm run build
 ```
 
-Pruebas de integración y E2E únicamente sobre bases desechables. CI comprueba migraciones, servicios, HTTP y navegador. El lockfile revisado debe versionarse antes de utilizar npm ci y construir la imagen de producción. Consultar guías de [pruebas](docs/testing.md), [seguridad](docs/security.md), [rendimiento](docs/performance.md) y [despliegue](docs/deployment.md).
+Pruebas de integración y E2E únicamente sobre bases desechables. CI comprueba migraciones, servicios, HTTP y navegador. El lockfile está versionado y npm ci pasó en CI. La validación funcional de e7d786d pasó 11 suites de integración, 21 comprobaciones de contraste y 2 pruebas Chromium. El informe de dependencias todavía contiene vulnerabilidades altas; se añade una puerta de seguridad bloqueante, además de pruebas de contenedor y restauración sintética. Consultar guías de [pruebas](docs/testing.md), [seguridad](docs/security.md), [rendimiento](docs/performance.md) y [despliegue](docs/deployment.md).
 
 - /api/health: disponibilidad del proceso.
 - /api/ready: conexión simple a PostgreSQL.
