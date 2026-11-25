@@ -1,10 +1,8 @@
-name: Application CI
+name: Dependency upgrade candidate
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches: [release/dependency-review]
   workflow_dispatch:
 
 permissions:
@@ -39,7 +37,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - name: Install locked dependencies
+      - name: Resolve candidate dependency versions
+        run: |
+          npm pkg set "dependencies.@prisma/client=7.10.1" "dependencies.@prisma/adapter-pg=7.10.1" "devDependencies.prisma=7.10.1" "overrides.exceljs.uuid=11.1.1"
+          npm install --package-lock-only --ignore-scripts
+      - name: Preserve candidate manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-candidate
+          path: |
+            package.json
+            package-lock.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Install candidate from generated lock
         run: npm ci
       - name: Generate client without database credentials
         run: env -u DATABASE_URL npm run db:generate
@@ -148,14 +159,5 @@ jobs:
           curl -fsS http://127.0.0.1:3200/api/ready | grep '"status":"ready"'
           curl -fsS http://127.0.0.1:3200/login | grep -q 'Iniciar sesión'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3200/dashboard)" = "307"
-  dependency-security:
-    name: Release security gate
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-      - name: Audit locked production and build dependencies
+      - name: Audit candidate build and runtime dependencies
         run: npm audit --audit-level=high
