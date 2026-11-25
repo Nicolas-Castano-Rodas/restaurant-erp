@@ -35,7 +35,9 @@
     "purchases:test": "tsx tests/integration/purchases.ts",
     "analytics:test": "tsx tests/integration/analytics.ts",
     "team:test": "tsx tests/integration/team.ts",
-    "ui:contrast": "node scripts/check-contrast.mjs"
+    "ui:contrast": "node scripts/check-contrast.mjs",
+    "test:e2e": "playwright test",
+    "demo:seed": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "next": "16.4.6",
@@ -58,6 +60,8 @@
     "tailwindcss": "4.3.5",
     "typescript": "5.9.3",
     "prisma": "7.9.1",
-    "tsx": "^4.23.12"
+    "tsx": "^4.23.12",
+    "@playwright/test": "^1.56.1",
+    "axe-core": "^4.10.3"
   }
 }

@@ -100,3 +100,5 @@ Seguridad: [sesiones y encabezados HTTP](docs/security.md).
 Rendimiento: [optimización de consultas y paginación](docs/performance.md).
 
 Accesibilidad: `npm run ui:contrast` verifica los pares de color del [sistema de diseño](docs/design-system.md). Las pruebas de navegador y lectores de pantalla siguen pendientes.
+
+Pruebas integrales: [guía de validación y Playwright](docs/testing.md).

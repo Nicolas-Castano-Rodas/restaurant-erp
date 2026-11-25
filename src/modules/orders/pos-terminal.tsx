@@ -99,7 +99,7 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
       </section>
       <section id="pos-cart" tabIndex={-1} className="reference-card min-w-0 p-3 sm:p-4 lg:sticky lg:top-4">
         <a href="#pos-products" className="mb-3 inline-flex min-h-11 items-center text-sm font-semibold text-brand underline lg:hidden">← Volver a productos</a>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">Pedido actual</h2><span role="status" aria-atomic="true" className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">{cart.reduce((sum, line) => sum + line.quantity, 0)} uds.</span></div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">Pedido actual</h2><output aria-atomic="true" className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">{cart.reduce((sum, line) => sum + line.quantity, 0)} uds.</output></div>
         <fieldset disabled={pending} className="space-y-3">
           <legend className="mb-2 text-xs font-semibold text-muted">Tipo de servicio</legend>
           <div className="grid grid-cols-3 gap-1">{channels.map((item) => <button type="button" key={item.id} aria-pressed={channel === item.id} onClick={() => { setChannel(item.id); setTableId(""); }} className={channel === item.id ? "min-h-11 rounded-lg bg-ink p-2 text-xs font-semibold text-white" : "min-h-11 rounded-lg border border-line p-2 text-xs font-semibold text-muted"}>{item.name}</button>)}</div>
