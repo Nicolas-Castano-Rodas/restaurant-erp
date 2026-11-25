@@ -6,7 +6,9 @@ COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN npm ci
 COPY . .
-RUN npm run build
+ARG ENABLE_HSTS=false
+ENV ENABLE_HSTS=$ENABLE_HSTS
+RUN mkdir -p public && npm run build
 
 FROM node:24-bookworm-slim AS runtime
 WORKDIR /app

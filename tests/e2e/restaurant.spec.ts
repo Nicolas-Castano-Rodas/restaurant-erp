@@ -86,8 +86,8 @@ test("owner completes POS, kitchen, stock, cash, reports and audit", async ({ pa
     expect(await download.failure()).toBeNull();
   }
   await page.goto("/dashboard/audit");
-  await expect(page.getByText("Pedido cobrado", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("Cierre de caja", { exact: true }).first()).toBeVisible();
+  await expect(page.locator("summary").getByText("Pedido cobrado", { exact: true }).first()).toBeVisible();
+  await expect(page.locator("summary").getByText("Cierre de caja", { exact: true }).first()).toBeVisible();
   await page.goto("/dashboard");
   await page.getByRole("button", { name: "Cerrar sesión" }).click();
   await expect(page).toHaveURL(/\/login$/);
