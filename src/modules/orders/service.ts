@@ -115,11 +115,38 @@ export async function createOrder(db: PrismaClient, scope: Scope, input: OrderIn
   }
 }
 
-export function listOrders(db: PrismaClient, organizationId: string, branchId: string) {
+export type OrderHistoryCursor = { createdAt: Date; id: string };
+export const ORDER_PAGE_SIZE = 50;
+
+export function parseOrderCursor(value: unknown): OrderHistoryCursor | undefined {
+  if (typeof value !== "string" || value.length > 80) return undefined;
+  const [date, id, extra] = value.split("~");
+  if (extra !== undefined || !id || !uuid.test(id) || !date || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(date)) return undefined;
+  const createdAt = new Date(date);
+  if (!Number.isFinite(createdAt.getTime()) || createdAt.toISOString() !== date) return undefined;
+  return { createdAt, id };
+}
+
+export function encodeOrderCursor(order: OrderHistoryCursor) {
+  return `${order.createdAt.toISOString()}~${order.id}`;
+}
+
+function queryOrderHistory(db: PrismaClient, organizationId: string, branchId: string, cursor: OrderHistoryCursor | undefined, take: number) {
   return db.order.findMany({
-    where: { organizationId, branchId },
-    orderBy: { createdAt: "desc" },
-    take: 50,
+    where: { organizationId, branchId, ...(cursor ? { OR: [{ createdAt: { lt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { lt: cursor.id } }] } : {}) },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take,
     select: { id: true, channel: true, status: true, kitchenStatus: true, tableName: true, customer: { select: { name: true } }, deliveryFee: true, delivery: { select: { status: true } }, total: true, currency: true, createdAt: true, note: true, cancelReason: true, closedAt: true, payment: { select: { method: true, amount: true, received: true, change: true, createdAt: true } }, lines: { select: { id: true, productName: true, variantName: true, quantity: true, lineTotal: true } } },
   });
+}
+
+export function listOrders(db: PrismaClient, organizationId: string, branchId: string) {
+  return queryOrderHistory(db, organizationId, branchId, undefined, ORDER_PAGE_SIZE);
+}
+
+export async function listOrderPage(db: PrismaClient, organizationId: string, branchId: string, cursor?: OrderHistoryCursor) {
+  const rows = await queryOrderHistory(db, organizationId, branchId, cursor, ORDER_PAGE_SIZE + 1);
+  const orders = rows.slice(0, ORDER_PAGE_SIZE);
+  const last = orders.at(-1);
+  return { orders, nextCursor: rows.length > ORDER_PAGE_SIZE && last ? encodeOrderCursor(last) : null };
 }

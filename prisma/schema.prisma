@@ -284,6 +284,7 @@ model Order {
   @@index([organizationId, branchId, status, createdAt])
   @@index([organizationId, branchId, kitchenStatus, createdAt])
   @@index([organizationId, branchId, customerId, createdAt], map: "Order_customer_history_idx")
+  @@index([organizationId, branchId, createdAt, id], map: "Order_branch_history_idx")
 }
 
 model OrderLine {
@@ -344,6 +345,7 @@ model CashShift {
 
   @@unique([organizationId, branchId, id])
   @@index([organizationId, branchId, status, openedAt])
+  @@index([organizationId, branchId, status, closedAt, id], map: "CashShift_branch_closed_idx")
 }
 
 model Payment {
@@ -506,6 +508,8 @@ model Purchase {
   @@unique([organizationId, branchId, id])
   @@unique([organizationId, branchId, requestId])
   @@index([organizationId, branchId, status, createdAt])
+  @@index([organizationId, branchId, createdAt], map: "Purchase_branch_created_idx")
+  @@index([organizationId, branchId, closedAt], map: "Purchase_branch_closed_idx")
 }
 
 model PurchaseLine {
@@ -588,6 +592,7 @@ model Delivery {
 
   @@unique([organizationId, branchId, orderId])
   @@index([organizationId, branchId, status, createdAt])
+  @@index([organizationId, branchId, updatedAt], map: "Delivery_branch_updated_idx")
 }
 
 model AuditEvent {

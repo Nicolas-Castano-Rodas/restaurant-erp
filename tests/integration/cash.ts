@@ -2,7 +2,7 @@ import "dotenv/config";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { getPrisma } from "../../src/lib/prisma";
-import { cancelOrder, closeShift, openShift, payOrder } from "../../src/modules/cash/service";
+import { cashOverview, cancelOrder, closeShift, openShift, payOrder } from "../../src/modules/cash/service";
 import { listTables } from "../../src/modules/catalog/service";
 
 async function main() {
@@ -33,6 +33,11 @@ async function main() {
     await assert.rejects(payOrder(db, scope, order.id, "CASH", "1"), /insuficiente/);
     const payment = await payOrder(db, scope, order.id, "CASH", "15000");
     assert.equal(payment.change.toFixed(2), "4999.50");
+    const overview = await cashOverview(db, organizationId, branch.id);
+    assert.equal(overview.totals.CASH, "10000.50");
+    assert.equal(overview.totals.CARD, "0.00");
+    assert.equal(overview.totals.TRANSFER, "0.00");
+    assert.equal((await cashOverview(db, organizationId, other.id)).totals.CASH, "0.00");
     assert.equal((await payOrder(db, scope, order.id, "CASH", "15000")).id, payment.id);
     await assert.rejects(payOrder(db, scope, order.id, "CARD", ""), /ya tiene/);
     assert.equal((await listTables(db, organizationId, branch.id))[0].occupied, false);

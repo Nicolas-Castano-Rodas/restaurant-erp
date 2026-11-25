@@ -96,10 +96,17 @@ export function closeShift(db: PrismaClient, scope: Scope, shiftId: string, coun
 
 export async function cashOverview(db: PrismaClient, organizationId: string, branchId: string) {
   const where = { organizationId, branchId };
-  const [shift, pending, history] = await Promise.all([
-    db.cashShift.findFirst({ where: { ...where, status: "OPEN" }, include: { payments: { select: { method: true, amount: true } } } }),
-    db.order.findMany({ where: { ...where, status: "OPEN" }, orderBy: { createdAt: "asc" }, select: { id: true, tableName: true, channel: true, kitchenStatus: true, delivery: { select: { status: true } }, total: true, currency: true } }),
-    db.cashShift.findMany({ where: { ...where, status: "CLOSED" }, orderBy: { closedAt: "desc" }, take: 10 }),
-  ]);
-  return { shift, pending, history };
+  return db.$transaction(async (tx) => {
+    const [shift, pending, history] = await Promise.all([
+      tx.cashShift.findFirst({ where: { ...where, status: "OPEN" } }),
+      tx.order.findMany({ where: { ...where, status: "OPEN" }, orderBy: [{ createdAt: "asc" }, { id: "asc" }], select: { id: true, tableName: true, channel: true, kitchenStatus: true, delivery: { select: { status: true } }, total: true, currency: true } }),
+      tx.cashShift.findMany({ where: { ...where, status: "CLOSED" }, orderBy: [{ closedAt: "desc" }, { id: "desc" }], take: 10 }),
+    ]);
+    const totals = { CASH: "0.00", CARD: "0.00", TRANSFER: "0.00" };
+    if (shift) {
+      const grouped = await tx.payment.groupBy({ by: ["method"], where: { ...where, shiftId: shift.id }, _sum: { amount: true } });
+      for (const entry of grouped) totals[entry.method] = entry._sum.amount?.toFixed(2) ?? "0.00";
+    }
+    return { shift, pending, history, totals };
+  }, { isolationLevel: "RepeatableRead" });
 }

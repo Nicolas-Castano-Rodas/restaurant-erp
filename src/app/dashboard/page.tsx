@@ -44,7 +44,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <Link href="/dashboard" aria-current="page" className="block rounded-lg bg-white/15 px-4 py-3 text-sm font-semibold">Resumen</Link>
           <p className="mb-3 mt-8 text-xs font-semibold uppercase tracking-widest text-slate-300">Módulos</p>
           {visibleModules.map((module) => (
-            module.href ? <Link key={module.name} href={module.href} className="block rounded-lg px-4 py-2 text-sm text-white hover:bg-white/10">{module.name}</Link> : <p key={module.name} className="px-4 py-2 text-sm text-slate-300">{module.name}</p>
+            module.href ? <Link key={module.name} href={module.href} prefetch={false} className="block rounded-lg px-4 py-2 text-sm text-white hover:bg-white/10">{module.name}</Link> : <p key={module.name} className="px-4 py-2 text-sm text-slate-300">{module.name}</p>
           ))}
         </nav>
         <form action={logout} className="mt-8">
@@ -87,7 +87,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   <span className="text-xs font-semibold text-brand">{module.href ? "Disponible" : "Próximamente"}</span>
                   <h3 className="mt-3 text-lg font-bold">{module.name}</h3>
                   <p className="mt-2 text-sm text-muted">{module.detail}</p>
-                  {module.href && <Link href={module.href} className="mt-4 inline-block text-sm font-semibold text-brand hover:underline">Abrir módulo →</Link>}
+                  {module.href && <Link href={module.href} prefetch={false} className="mt-4 inline-block text-sm font-semibold text-brand hover:underline">Abrir módulo →</Link>}
                 </article>
               ))}
             </div>

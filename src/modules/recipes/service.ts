@@ -70,24 +70,41 @@ export async function consumeRecipeIngredients(tx: Prisma.TransactionClient, sco
   const order = await tx.order.findFirst({ where: { id: orderId, organizationId, branchId, status: "OPEN", kitchenStatus: "PREPARING" }, select: { lines: { select: { productId: true, variantId: true, quantity: true } } } });
   if (!order) throw new InventoryError("Pedido no disponible.");
   const recipe = await tx.recipeLine.findMany({ where: { organizationId, productId: { in: order.lines.map((line) => line.productId) } }, select: { productId: true, variantId: true, ingredientId: true, quantity: true } });
+  const byProduct = new Map<string, typeof recipe>();
+  const byVariant = new Map<string, typeof recipe>();
+  for (const item of recipe) {
+    const map = item.variantId ? byVariant : byProduct;
+    const key = item.variantId ? `${item.productId}:${item.variantId}` : item.productId;
+    const entries = map.get(key) ?? [];
+    entries.push(item);
+    map.set(key, entries);
+  }
   const totals = new Map<string, bigint>();
   for (const line of order.lines) {
-    const base = recipe.filter((r) => r.productId === line.productId && r.variantId === null);
-    const variant = line.variantId ? recipe.filter((r) => r.productId === line.productId && r.variantId === line.variantId) : [];
+    const base = byProduct.get(line.productId) ?? [];
+    const variant = line.variantId ? byVariant.get(`${line.productId}:${line.variantId}`) ?? [] : [];
     for (const item of variant.length ? variant : base) {
       totals.set(item.ingredientId, (totals.get(item.ingredientId) ?? 0n) + toMilli(item.quantity.toFixed(3)) * BigInt(line.quantity));
     }
   }
+  if (!totals.size) return;
+  const balances = await tx.inventoryBalance.findMany({
+    where: { organizationId, branchId, ingredientId: { in: [...totals.keys()] } },
+    include: { ingredient: { select: { active: true, unit: true, name: true } } },
+  });
+  const byIngredient = new Map(balances.map((balance) => [balance.ingredientId, balance]));
+  const movements: Prisma.StockMovementCreateManyInput[] = [];
   for (const ingredientId of [...totals.keys()].sort()) {
     const quantity = totals.get(ingredientId) ?? 0n;
     const key = { organizationId, branchId, ingredientId };
-    const balance = await tx.inventoryBalance.findUnique({ where: { organizationId_branchId_ingredientId: key }, include: { ingredient: true } });
+    const balance = byIngredient.get(ingredientId);
     if (!balance || !balance.ingredient.active) throw new InventoryError("Hay ingredientes de la receta sin configurar en esta sucursal. Revisa inventario.");
     if (balance.ingredient.unit === "UNIT" && quantity % 1000n !== 0n) throw new InventoryError("La receta contiene una cantidad de unidades inválida.");
     const current = toMilli(balance.quantity.toFixed(3));
     if (quantity > current) throw new InventoryError(`Existencias insuficientes: ${balance.ingredient.name}. Revisa inventario.`);
     const balanceAfter = fromMilli(current - quantity);
     await tx.inventoryBalance.update({ where: { organizationId_branchId_ingredientId: key }, data: { quantity: balanceAfter } });
-    await tx.stockMovement.create({ data: { ...key, membershipId, orderId, requestId: randomUUID(), kind: "EXIT", quantity: fromMilli(quantity), balanceAfter, unitCost: balance.unitCost, reason: `Consumo de cocina · Pedido #${orderId.slice(0, 8).toUpperCase()}` } });
+    movements.push({ ...key, membershipId, orderId, requestId: randomUUID(), kind: "EXIT", quantity: fromMilli(quantity), balanceAfter, unitCost: balance.unitCost, reason: `Consumo de cocina · Pedido #${orderId.slice(0, 8).toUpperCase()}` });
   }
+  await tx.stockMovement.createMany({ data: movements });
 }

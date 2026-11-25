@@ -11,11 +11,11 @@ const kitchenStatus = { PENDING: "Pendiente", PREPARING: "En preparación", READ
 
 export default async function CashPage({ searchParams }: { searchParams: Promise<{ error?: string; saved?: string }> }) {
   const context = await requireWorkspace("cash.manage");
-  const { shift, pending, history } = await cashOverview(getPrisma(), context.organization.id, context.branch.id);
+  const { shift, pending, history, totals } = await cashOverview(getPrisma(), context.organization.id, context.branch.id);
   const { error, saved } = await searchParams;
   const scope = `${context.organization.id}:${context.branch.id}`;
   const money = (value: number, currency = context.organization.currency) => new Intl.NumberFormat("es-CO", { style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
-  const sum = (method: "CASH" | "CARD" | "TRANSFER") => shift?.payments.filter((p) => p.method === method).reduce((total, p) => total + toMinor(p.amount.toFixed(2)), 0n) ?? 0n;
+  const sum = (method: "CASH" | "CARD" | "TRANSFER") => toMinor(totals[method]);
   const expected = shift ? toMinor(shift.openingAmount.toFixed(2)) + sum("CASH") : 0n;
   return <ModulePage title="Caja" subtitle={`${context.organization.name} · ${context.branch.name}`}>
     {error && <p role="alert" className="mb-3 rounded-lg bg-danger-soft p-3 text-sm text-danger">{error}</p>}

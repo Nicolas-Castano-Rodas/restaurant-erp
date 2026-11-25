@@ -1,0 +1,12 @@
+# Optimización de rendimiento
+
+Fase 8.4. Cambios orientados a reducir datos transferidos y trabajo repetido, sin afirmar mejoras de latencia no medidas.
+
+- Caja: PostgreSQL agrupa pagos del turno por método y devuelve como máximo tres totales. Antes se transfería una fila por pago. El resumen usa una transacción Repeatable Read para mantener consistencia con el turno. El cierre ya agregaba efectivo en BD y conserva su validación.
+- Historial de pedidos: paginación por clave (createdAt, id), 50 registros visibles y una fila adicional para saber si existe otra página. Orden determinista incluso con timestamps iguales; no usa OFFSET ni conteo global. El cursor se valida, no concede acceso: cada consulta mantiene organización y sucursal. Nuevos pedidos no se insertan en páginas antiguas, salvo inserciones con fecha anterior. El enlace Más recientes vuelve al inicio.
+- Consumo de cocina: agrupa recetas en mapas de producto/variante, consulta los saldos requeridos por lote y registra movimientos mediante createMany. Actualiza saldos individualmente en orden estable, conserva transacción serializable, validación de unidades, rollback y restricción de duplicados.
+- Dashboard: desactiva prefetch de enlaces de módulos privados para evitar consultas anticipadas innecesarias. No cachea información de sesiones o permisos entre solicitudes.
+- Índices nuevos: historial de pedidos por sucursal, compras por creación y cierre, cierres de caja y actualización de domicilios. No se eliminan índices existentes. La migración usa CREATE INDEX normal; en instalaciones grandes programar ventana de mantenimiento. Los índices aumentan espacio y costo de escrituras.
+- No se limitan silenciosamente las comandas abiertas, entregas activas o existencias operativas. El volumen de esos módulos, la paginación de catálogos y auditoría, pooling de conexiones y carga concurrente de reportes necesitan pruebas de escala adicionales.
+
+Verificación: pruebas de integración de caja, pedidos (más de 50 registros con fechas iguales, aislamiento y cursor inválido), recetas, auditoría y CI completa. Aplicar npm run db:deploy. Para medir rendimiento real, usar una BD desechable con datos sintéticos representativos, EXPLAIN (ANALYZE, BUFFERS) sobre consultas SELECT y mediciones p50/p95/p99 de rutas autenticadas. Comparar el mismo volumen y entorno antes/después. No ejecutar pruebas de carga sobre producción sin autorización. No hay mediciones de latencia o capacidad certificadas en esta fase.
