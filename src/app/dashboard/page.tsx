@@ -11,6 +11,7 @@ const modules: { name: string; detail: string; permission: string; href?: string
   { name: "Cocina", detail: "Comandas y preparación", permission: "kitchen.manage", href: "/dashboard/kitchen" },
   { name: "Inventario", detail: "Ingredientes y existencias", permission: "inventory.manage", href: "/dashboard/inventory" },
   { name: "Recetas", detail: "Ingredientes y costos de producción", permission: "inventory.manage", href: "/dashboard/recipes" },
+  { name: "Compras", detail: "Proveedores y recepción de mercancía", permission: "inventory.manage", href: "/dashboard/purchases" },
   { name: "Caja", detail: "Cobros y turnos", permission: "cash.manage", href: "/dashboard/cash" },
   { name: "Catálogo", detail: "Productos y precios", permission: "catalog.manage", href: "/dashboard/catalog" },
   { name: "Administración", detail: "Organización y equipo", permission: "team.manage" },

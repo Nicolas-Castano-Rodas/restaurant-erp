@@ -92,7 +92,7 @@ export function recordMovement(db: PrismaClient, scope: Scope, input: { ingredie
 export async function inventoryOverview(db: PrismaClient, organizationId: string, branchId: string) {
   const [ingredients, movements] = await Promise.all([
     db.ingredient.findMany({ where: { organizationId, active: true }, orderBy: { name: "asc" }, select: { id: true, name: true, unit: true, balances: { where: { organizationId, branchId }, select: { quantity: true, minimum: true, unitCost: true } } } }),
-    db.stockMovement.findMany({ where: { organizationId, branchId }, orderBy: { createdAt: "desc" }, take: 50, select: { id: true, kind: true, quantity: true, balanceAfter: true, reason: true, orderId: true, unitCost: true, createdAt: true, balance: { select: { ingredient: { select: { name: true, unit: true } } } }, membership: { select: { user: { select: { name: true } } } } } }),
+    db.stockMovement.findMany({ where: { organizationId, branchId }, orderBy: { createdAt: "desc" }, take: 50, select: { id: true, kind: true, quantity: true, balanceAfter: true, reason: true, orderId: true, purchaseId: true, unitCost: true, createdAt: true, balance: { select: { ingredient: { select: { name: true, unit: true } } } }, membership: { select: { user: { select: { name: true } } } } } }),
   ]);
   return { ingredients, movements };
 }

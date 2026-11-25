@@ -27,7 +27,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   return <ModulePage title="Inventario" subtitle={`${context.organization.name} · ${context.branch.name}`}>
     {error && <p role="alert" className="mb-3 rounded-lg bg-danger-soft p-3 text-sm text-danger">{error}</p>}
     {saved && <output className="mb-3 block rounded-lg bg-success-soft p-3 text-sm text-success">Movimiento o configuración guardados.</output>}
-    <Link href="/dashboard/recipes" className="mb-3 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">Gestionar recetas y costos →</Link>
+    <div className="mb-3 flex flex-wrap gap-2"><Link href="/dashboard/recipes" className="inline-block rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">Gestionar recetas y costos →</Link><Link href="/dashboard/purchases" className="inline-block rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand">Compras y proveedores →</Link></div>
     <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
       {[{ label: "Ingredientes en sucursal", value: configured.length, color: "text-ink" }, { label: "Stock bajo", value: low, color: "text-warning" }, { label: "Agotados", value: empty, color: "text-danger" }].map((item) => <section key={item.label} className="reference-card p-4"><h2 className="text-xs text-muted">{item.label}</h2><p className={`mt-1 text-3xl font-semibold tabular-nums ${item.color}`}>{item.value}</p></section>)}
     </div>
@@ -110,7 +110,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               <dl className="mb-4 grid gap-3 rounded-lg bg-canvas p-3 text-xs text-muted sm:grid-cols-3">
                 <div><dt>Responsable</dt><dd className="mt-1 break-words font-semibold text-ink">{movement.membership.user.name}</dd></div>
                 <div><dt>Fecha</dt><dd className="mt-1 font-semibold text-ink">{movement.createdAt.toLocaleString("es-CO", { timeZone: context.organization.timeZone })}</dd></div>
-                <div><dt>Saldo resultante</dt><dd className="mt-1 font-semibold text-ink">{number.format(Number(movement.balanceAfter))} {unit}</dd></div>{movement.orderId && <div><dt>Pedido asociado</dt><dd className="mt-1 font-semibold text-ink">#{movement.orderId.slice(0, 8).toUpperCase()}</dd></div>}{movement.unitCost !== null && <div><dt>Costo unitario registrado</dt><dd className="mt-1 font-semibold text-ink">{movement.unitCost.toFixed(2)} {context.organization.currency}</dd></div>}
+                <div><dt>Saldo resultante</dt><dd className="mt-1 font-semibold text-ink">{number.format(Number(movement.balanceAfter))} {unit}</dd></div>{movement.orderId && <div><dt>Pedido asociado</dt><dd className="mt-1 font-semibold text-ink">#{movement.orderId.slice(0, 8).toUpperCase()}</dd></div>}{movement.purchaseId && <div><dt>Compra asociada</dt><dd className="mt-1 font-semibold text-ink">#{movement.purchaseId.slice(0, 8).toUpperCase()}</dd></div>}{movement.unitCost !== null && <div><dt>Costo unitario registrado</dt><dd className="mt-1 font-semibold text-ink">{movement.unitCost.toFixed(2)} {context.organization.currency}</dd></div>}
               </dl>
             </details>
           );

@@ -4,6 +4,8 @@ Ruta /dashboard/inventory, permiso inventory.manage. Ingredientes compartidos en
 
 Cantidades DECIMAL(16,3), cálculos en milésimas enteras, transacciones serializables y restricciones de saldo no negativo. Identificador de solicitud por sucursal evita duplicar movimientos idénticos; ante conflictos concurrentes, actualizar y verificar historial antes de repetir. El mínimo es configurable por sucursal. Stock agotado = cero; stock bajo = positivo e igual o inferior al mínimo. Los ingredientes en otras sucursales necesitan configuración local.
 
-Aplicar npm run db:deploy. CI comprueba precisión, idempotencia, aislamiento de sucursales, límites de stock y unidades enteras. Pendientes: recetas por producto y variante, consumo automático, costos, compras, proveedores, transferencias de existencias y auditoría ampliada.
+Aplicar npm run db:deploy. CI comprueba precisión, idempotencia, aislamiento de sucursales, límites de stock y unidades enteras. Pendientes: transferencias de existencias y auditoría ampliada.
 
-Las recetas y el consumo de cocina se gestionan según [Recetas y consumo](recipes.md). El costo unitario es manual e independiente por sucursal. Los movimientos automáticos son salidas vinculadas al pedido.
+Las recetas y el consumo de cocina se gestionan según [Recetas y consumo](recipes.md). El costo unitario es independiente por sucursal, configurable manualmente y actualizado con el último precio de una compra recibida. Los movimientos automáticos son salidas vinculadas al pedido.
+
+Las recepciones generan entradas automáticamente. Consultar [Compras y proveedores](purchases.md).

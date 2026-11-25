@@ -91,6 +91,10 @@ jobs:
         env:
           RUN_DB_TESTS: "true"
         run: npm run recipes:test
+      - name: Purchase receipt integration test
+        env:
+          RUN_DB_TESTS: "true"
+        run: npm run purchases:test
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
@@ -112,3 +116,4 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/cash)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/inventory)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/recipes)" = "307"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/purchases)" = "307"

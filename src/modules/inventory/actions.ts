@@ -30,5 +30,6 @@ export async function manageInventory(form: FormData) {
     message = error instanceof InventoryError ? error.message : "No se pudo guardar. Verifica nombres duplicados o movimientos concurrentes y actualiza antes de reintentar.";
   }
   revalidatePath("/dashboard/inventory");
+  revalidatePath("/dashboard/recipes");
   redirect(message ? `/dashboard/inventory?error=${encodeURIComponent(message)}` : "/dashboard/inventory?saved=1");
 }
