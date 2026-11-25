@@ -8,6 +8,7 @@ const modules: { name: string; detail: string; permission: string; href?: string
   { name: "Mesas", detail: "Distribución y capacidad", permission: "orders.manage", href: "/dashboard/tables" },
   { name: "Punto de venta", detail: "Pedidos y mesas", permission: "orders.manage", href: "/dashboard/pos" },
   { name: "Pedidos", detail: "Historial de pedidos", permission: "orders.manage", href: "/dashboard/orders" },
+  { name: "Clientes", detail: "Registro e historial de consumo", permission: "orders.manage", href: "/dashboard/customers" },
   { name: "Cocina", detail: "Comandas y preparación", permission: "kitchen.manage", href: "/dashboard/kitchen" },
   { name: "Inventario", detail: "Ingredientes y existencias", permission: "inventory.manage", href: "/dashboard/inventory" },
   { name: "Recetas", detail: "Ingredientes y costos de producción", permission: "inventory.manage", href: "/dashboard/recipes" },

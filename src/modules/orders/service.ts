@@ -5,7 +5,7 @@ import { fromMinor, toMinor } from "./money";
 type Scope = { organizationId: string; branchId: string; membershipId: string };
 type Channel = "DINE_IN" | "TAKEAWAY" | "DELIVERY";
 type Item = { productId: string; variantId: string | null; quantity: number };
-export type OrderInput = { requestId: string; channel: Channel; tableId: string | null; note: string; items: Item[] };
+export type OrderInput = { requestId: string; channel: Channel; tableId: string | null; note: string; customerId?: string | null; items: Item[] };
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class OrderError extends Error {}
@@ -13,10 +13,11 @@ export class OrderError extends Error {}
 export function parseOrderInput(raw: unknown): OrderInput {
   if (!raw || typeof raw !== "object") throw new OrderError("Pedido inválido.");
   const data = raw as Record<string, unknown>;
-  const { requestId, channel, tableId, note, items } = data;
+  const { requestId, channel, tableId, note, items, customerId } = data;
   if (typeof requestId !== "string" || !uuid.test(requestId) ||
     (channel !== "DINE_IN" && channel !== "TAKEAWAY" && channel !== "DELIVERY") ||
     (channel === "DINE_IN" ? typeof tableId !== "string" || !uuid.test(tableId) : tableId !== null) ||
+    (customerId != null && (typeof customerId !== "string" || !uuid.test(customerId))) ||
     typeof note !== "string" || note.length > 500 || !Array.isArray(items) || !items.length || items.length > 100) {
     throw new OrderError("Revisa los datos del pedido.");
   }
@@ -32,7 +33,7 @@ export function parseOrderInput(raw: unknown): OrderInput {
     return { productId, variantId, quantity };
   });
   validated.sort((a, b) => `${a.productId}:${a.variantId ?? ""}`.localeCompare(`${b.productId}:${b.variantId ?? ""}`));
-  return { requestId, channel, tableId: channel === "DINE_IN" ? tableId as string : null, note: note.trim(), items: validated };
+  return { requestId, channel, tableId: channel === "DINE_IN" ? tableId as string : null, note: note.trim(), items: validated, ...(typeof customerId === "string" ? { customerId } : {}) };
 }
 
 export async function createOrder(db: PrismaClient, scope: Scope, input: OrderInput) {
@@ -60,6 +61,7 @@ export async function createOrder(db: PrismaClient, scope: Scope, input: OrderIn
         if (previous.requestHash !== requestHash) throw new OrderError("La solicitud ya fue utilizada para otro pedido.");
         return previous.id;
       }
+      if (data.customerId && !await tx.customer.findFirst({ where: { id: data.customerId, organizationId, branchId, active: true }, select: { id: true } })) throw new OrderError("Cliente no disponible en esta sucursal.");
       const table = data.tableId ? await tx.restaurantTable.findFirst({ where: { id: data.tableId, organizationId, branchId, active: true } }) : null;
       if (data.tableId && !table) throw new OrderError("Mesa no disponible en esta sucursal.");
       if (table && await tx.order.findFirst({ where: { organizationId, branchId, tableId: table.id, status: "OPEN" }, select: { id: true } })) throw new OrderError("La mesa ya tiene un pedido abierto.");
@@ -82,7 +84,7 @@ export async function createOrder(db: PrismaClient, scope: Scope, input: OrderIn
       const total = fromMinor(subtotal);
       const order = await tx.order.create({ data: {
         ...key, membershipId, requestHash, channel: data.channel, tableId: table?.id ?? null, tableName: table?.name ?? null,
-        currency: membership.organization.currency, subtotal: total, total, note: data.note || null,
+        customerId: data.customerId ?? null, currency: membership.organization.currency, subtotal: total, total, note: data.note || null,
       }, select: { id: true } });
       await tx.orderLine.createMany({ data: lines.map((line) => ({ ...line, organizationId, orderId: order.id })) });
       return order.id;
@@ -106,6 +108,6 @@ export function listOrders(db: PrismaClient, organizationId: string, branchId: s
     where: { organizationId, branchId },
     orderBy: { createdAt: "desc" },
     take: 50,
-    select: { id: true, channel: true, status: true, kitchenStatus: true, tableName: true, total: true, currency: true, createdAt: true, note: true, cancelReason: true, closedAt: true, payment: { select: { method: true, amount: true, received: true, change: true, createdAt: true } }, lines: { select: { id: true, productName: true, variantName: true, quantity: true, lineTotal: true } } },
+    select: { id: true, channel: true, status: true, kitchenStatus: true, tableName: true, customer: { select: { name: true } }, total: true, currency: true, createdAt: true, note: true, cancelReason: true, closedAt: true, payment: { select: { method: true, amount: true, received: true, change: true, createdAt: true } }, lines: { select: { id: true, productName: true, variantName: true, quantity: true, lineTotal: true } } },
   });
 }

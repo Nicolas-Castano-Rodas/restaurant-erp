@@ -13,7 +13,7 @@ type CartLine = { key: string; productId: string; variantId: string | null; name
 type Channel = "DINE_IN" | "TAKEAWAY" | "DELIVERY";
 const channels: { id: Channel; name: string }[] = [{ id: "DINE_IN", name: "En mesa" }, { id: "TAKEAWAY", name: "Para llevar" }, { id: "DELIVERY", name: "Domicilio" }];
 
-export function PosTerminal({ products, tables, currency, scope, initialRequestId, initialTableId }: { products: Product[]; tables: { id: string; name: string; capacity: number; active: boolean; occupied: boolean }[]; currency: string; scope: string; initialRequestId: string; initialTableId: string }) {
+export function PosTerminal({ products, tables, currency, scope, initialRequestId, initialTableId, customers, initialCustomerId }: { products: Product[]; tables: { id: string; name: string; capacity: number; active: boolean; occupied: boolean }[]; currency: string; scope: string; initialRequestId: string; initialTableId: string; customers: { id: string; name: string; phone: string | null }[]; initialCustomerId: string }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
@@ -22,6 +22,9 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
   const selectedTable = tables.find((table) => table.id === tableId && table.active && !table.occupied);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [note, setNote] = useState("");
+  const [customerId, setCustomerId] = useState(initialCustomerId);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const matchingCustomers = customers.filter((customer) => customer.id === customerId || `${customer.name} ${customer.phone ?? ""}`.toLowerCase().includes(customerSearch.trim().toLowerCase()));
   const [requestId, setRequestId] = useState(initialRequestId);
   const [result, setResult] = useState<{ id: string; nextRequestId: string } | { error: string } | null>(null);
   const [pending, startTransition] = useTransition();
@@ -44,11 +47,13 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
     setResult(null);
     startTransition(async () => {
       try {
-        const response = await submitOrder(scope, { requestId, channel, tableId: channel === "DINE_IN" ? tableId : null, note, items: cart.map(({ productId, variantId, quantity }) => ({ productId, variantId, quantity })) });
+        const response = await submitOrder(scope, { requestId, channel, tableId: channel === "DINE_IN" ? tableId : null, note, customerId: customerId || null, items: cart.map(({ productId, variantId, quantity }) => ({ productId, variantId, quantity })) });
         setResult(response);
         if ("id" in response) {
           setCart([]);
           setNote("");
+          setCustomerId("");
+          setCustomerSearch("");
           setTableId("");
           setRequestId(response.nextRequestId);
           router.refresh();
@@ -103,6 +108,12 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
             {tables.length > 0 && !tables.some((table) => table.active && !table.occupied) && <p className="rounded-lg bg-warning-soft p-3 text-xs text-warning">No hay mesas libres. Revisa los pedidos abiertos o habilita una mesa. <Link href="/dashboard/tables" className="font-semibold underline">Administrar mesas</Link>.</p>}
             {selectedTable && <p className="rounded-lg bg-success-soft p-2 text-xs font-semibold text-success">Mesa seleccionada: {selectedTable.name}</p>}
           </div>}
+          <div className="rounded-xl border border-line bg-canvas p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2"><p className="text-sm font-semibold">Cliente (opcional)</p><Link href="/dashboard/customers" className="text-xs font-semibold text-brand underline">Gestionar</Link></div>
+            <label className="block text-xs text-muted">Buscar entre los clientes recientes<input value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} placeholder="Nombre o teléfono" className="mt-2 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm" /></label>
+            <label className="block text-xs text-muted">Cliente del pedido<select value={customerId} onChange={(event) => setCustomerId(event.target.value)} className="mt-2 w-full rounded-lg border border-line bg-surface px-2 py-3 text-sm"><option value="">Consumidor final / sin registro</option>{matchingCustomers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}{customer.phone ? ` · ${customer.phone}` : ""}</option>)}</select></label>
+            {customerSearch && !matchingCustomers.length && <p className="text-xs text-muted">Sin coincidencias. Busca en el módulo Clientes.</p>}
+          </div>
           <div className="divide-y divide-line border-y border-line">
             {cart.map((line) => <div key={line.key} className="py-3"><p className="text-sm font-semibold">{line.name}</p><div className="mt-2 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><button type="button" aria-label={`Reducir ${line.name}`} onClick={() => changeQuantity(line.key, -1)} className="size-11 rounded-lg border border-line">−</button><span className="min-w-5 text-center text-sm tabular-nums">{line.quantity}</span><button type="button" aria-label={`Aumentar ${line.name}`} onClick={() => changeQuantity(line.key, 1)} className="size-11 rounded-lg border border-line">+</button></div><span className="text-sm font-semibold tabular-nums">{money(toMinor(line.price) * BigInt(line.quantity))}</span></div></div>)}
             {!cart.length && <p className="py-5 text-sm text-muted">Agrega productos para comenzar.</p>}

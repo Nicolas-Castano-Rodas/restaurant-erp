@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { getPrisma } from "../../src/lib/prisma";
 import { createOrder, parseOrderInput } from "../../src/modules/orders/service";
+import { saveCustomer, customerHistory, listPosCustomers } from "../../src/modules/customers/service";
 import { listTables } from "../../src/modules/catalog/service";
 
 async function main() {
@@ -26,16 +27,29 @@ async function main() {
     const product = await db.product.create({ data: { organizationId: a.id, categoryId: category.id, name: "Arroz", price: "12500.50" } });
     const variant = await db.productVariant.create({ data: { organizationId: a.id, productId: product.id, name: "Grande", price: "18000.25" } });
     const scope = { organizationId: a.id, branchId: branch.id, membershipId: membership.id };
-    const input = parseOrderInput({ requestId: randomUUID(), channel: "DINE_IN", tableId: table.id, note: "", items: [{ productId: product.id, variantId: variant.id, quantity: 3, price: "1" }] });
+    const customer = await saveCustomer(db, scope, { name: "Cliente de prueba", phone: "3000000000", email: "", active: true });
+    const foreign = await db.customer.create({ data: { organizationId: b.id, branchId: otherBranch.id, name: "Other" } });
+    assert.equal((await listPosCustomers(db, a.id, branch.id)).length, 1);
+    const input = parseOrderInput({ requestId: randomUUID(), channel: "DINE_IN", tableId: table.id, customerId: customer.id, note: "", items: [{ productId: product.id, variantId: variant.id, quantity: 3, price: "1" }] });
+    await assert.rejects(createOrder(db, scope, { ...input, customerId: foreign.id }), /Cliente no disponible/);
     const id = await createOrder(db, scope, input);
     assert.equal(await createOrder(db, scope, input), id);
     const order = await db.order.findUniqueOrThrow({ where: { id }, include: { lines: true } });
     assert.equal(order.total.toFixed(2), "54000.75");
+    assert.equal(order.customerId, customer.id);
+    assert.equal((await customerHistory(db, a.id, branch.id, customer.id))?.orders.length, 1);
+    assert.equal((await customerHistory(db, a.id, branch.id, customer.id))?.paid.length, 0);
+    assert.equal(await customerHistory(db, a.id, branch.id, foreign.id), null);
     assert.equal(order.lines[0].productName, "Arroz");
     assert.equal((await listTables(db, a.id, branch.id))[0].occupied, true);
     await assert.rejects(createOrder(db, scope, { ...input, requestId: randomUUID() }), /pedido abierto/);
     await assert.rejects(createOrder(db, scope, { ...input, requestId: randomUUID(), tableId: otherTable.id }), /Mesa no disponible/);
     await assert.rejects(createOrder(db, scope, { ...input, note: "changed" }), /solicitud ya fue utilizada/);
+    await saveCustomer(db, scope, { id: customer.id, name: "Cliente de prueba", phone: "", email: "", active: false });
+    await assert.rejects(createOrder(db, scope, { ...input, requestId: randomUUID(), channel: "TAKEAWAY", tableId: null }), /Cliente no disponible/);
+    await saveCustomer(db, scope, { id: customer.id, name: "Cliente de prueba", phone: "", email: "", active: true });
+    const anonymous = await createOrder(db, scope, { ...input, customerId: null, requestId: randomUUID(), channel: "TAKEAWAY", tableId: null });
+    assert.equal((await db.order.findUniqueOrThrow({ where: { id: anonymous } })).customerId, null);
     await db.product.update({ where: { id: product.id }, data: { name: "Changed", available: false } });
     assert.equal((await db.orderLine.findFirstOrThrow({ where: { orderId: id } })).productName, "Arroz");
     await assert.rejects(createOrder(db, scope, { ...input, requestId: randomUUID(), channel: "TAKEAWAY", tableId: null }), /ya no está disponible/);
@@ -46,6 +60,7 @@ async function main() {
       const where = { organizationId: { in: ids } };
       await db.orderLine.deleteMany({ where });
       await db.order.deleteMany({ where });
+      await db.customer.deleteMany({ where });
       await db.restaurantTable.deleteMany({ where });
       await db.productVariant.deleteMany({ where });
       await db.product.deleteMany({ where });

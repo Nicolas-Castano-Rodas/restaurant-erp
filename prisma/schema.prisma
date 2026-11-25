@@ -41,6 +41,7 @@ model Branch {
   cashShifts     CashShift[]
   inventoryBalances InventoryBalance[]
   purchases Purchase[]
+  customers Customer[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, code])
@@ -240,6 +241,7 @@ model Order {
   membershipId   String @db.Uuid
   tableId        String? @db.Uuid
   tableName      String?
+  customerId     String? @db.Uuid
   requestId      String @db.Uuid
   requestHash    String @db.VarChar(64)
   channel        OrderChannel
@@ -262,6 +264,7 @@ model Order {
   branch         Branch @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
   membership     Membership @relation(fields: [organizationId, membershipId], references: [organizationId, id], onDelete: Restrict)
   table          RestaurantTable? @relation(fields: [organizationId, branchId, tableId], references: [organizationId, branchId, id], onDelete: Restrict)
+  customer       Customer? @relation(fields: [organizationId, branchId, customerId], references: [organizationId, branchId, id], onDelete: Restrict)
   lines          OrderLine[]
   stockMovements StockMovement[]
   payment        Payment?
@@ -272,6 +275,7 @@ model Order {
   @@unique([organizationId, branchId, requestId])
   @@index([organizationId, branchId, status, createdAt])
   @@index([organizationId, branchId, kitchenStatus, createdAt])
+  @@index([organizationId, branchId, customerId, createdAt], map: "Order_customer_history_idx")
 }
 
 model OrderLine {
@@ -511,4 +515,22 @@ model PurchaseLine {
 
   @@unique([organizationId, branchId, purchaseId, ingredientId], map: "PurchaseLine_purchase_ingredient_key")
   @@index([organizationId, ingredientId])
+}
+
+model Customer {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  branchId       String @db.Uuid
+  name           String
+  phone          String?
+  email          String?
+  active         Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  branch         Branch @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
+  orders         Order[]
+
+  @@unique([organizationId, branchId, id])
+  @@index([organizationId, branchId, name])
+  @@index([organizationId, branchId, phone])
 }
