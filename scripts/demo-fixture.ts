@@ -3,13 +3,8 @@ import { getPrisma } from "../src/lib/prisma";
 import { hashPassword, validPassword } from "../src/modules/auth/password";
 import { permissions } from "../src/modules/auth/permissions";
 
-export function requireDisposableDatabase(mode: "test" | "demo") {
-  let url: URL;
-  try { url = new URL(process.env.DATABASE_URL ?? "invalid"); } catch { throw new Error("Configure a valid local disposable database URL."); }
-  const expected = mode === "test" ? "restaurant_erp_test" : "restaurant_erp_demo";
-  const allowed = mode === "test" ? process.env.RUN_BROWSER_TESTS === "true" : process.env.ALLOW_DEMO_SEED === "true";
-  if (!allowed || !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) || decodeURIComponent(url.pathname.slice(1)) !== expected || !["postgres:", "postgresql:"].includes(url.protocol)) throw new Error("Use an explicitly enabled local disposable database: " + expected);
-}
+import { requireDisposableDatabase } from "./disposable-database";
+export { requireDisposableDatabase } from "./disposable-database";
 
 // Synthetic tenant only. No existing rows are overwritten; credentials are supplied by the caller.
 export async function createDemoFixture(mode: "test" | "demo", password: string) {

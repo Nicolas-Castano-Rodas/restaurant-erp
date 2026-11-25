@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
-import { requireDisposableDatabase } from "./scripts/demo-fixture";
+import { requireDisposableDatabase } from "./scripts/disposable-database";
 
 requireDisposableDatabase("test");
 

@@ -1,14 +1,24 @@
 import { randomUUID } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { expect, type Page, test } from "@playwright/test";
 import axe from "axe-core";
-import { createDemoFixture } from "../../scripts/demo-fixture";
-import { getPrisma } from "../../src/lib/prisma";
+import type { createDemoFixture } from "../../scripts/demo-fixture";
 
 const password = `E2E-${randomUUID()}`;
 let fixture: Awaited<ReturnType<typeof createDemoFixture>>;
 
-test.beforeAll(async () => { fixture = await createDemoFixture("test", password); });
-test.afterAll(async () => { await getPrisma().$disconnect(); });
+function databaseCommand<T>(args: string[]): T {
+  const result = execFileSync(process.execPath, ["--import", "tsx", "scripts/browser-db.ts", ...args], {
+    encoding: "utf8", timeout: 30000, env: { ...process.env, BROWSER_FIXTURE_PASSWORD: password },
+  });
+  return JSON.parse(result.trim()) as T;
+}
+
+function snapshot() {
+  return databaseCommand<{ quantity: string; orderStatus: string | null; payment: string | null; difference: string | null }>(["snapshot", fixture.organizationId, fixture.branchId, fixture.ingredientId]);
+}
+
+test.beforeAll(() => { fixture = databaseCommand<Awaited<ReturnType<typeof createDemoFixture>>>(["seed"]); });
 
 async function login(page: Page, email: string, context: string) {
   await page.goto("/login");
@@ -19,6 +29,7 @@ async function login(page: Page, email: string, context: string) {
   await page.getByLabel("Seleccionar espacio de trabajo").selectOption(context);
   await page.getByRole("button", { name: "Aplicar" }).click();
   await expect(page.getByRole("heading", { name: "Módulos de tu espacio de trabajo" })).toBeVisible();
+  await expect(page.getByLabel("Seleccionar espacio de trabajo")).toHaveValue(context);
 }
 
 async function checkViewport(page: Page, width: number) {
@@ -59,10 +70,7 @@ test("owner completes POS, kitchen, stock, cash, reports and audit", async ({ pa
   await page.getByRole("button", { name: "Marcar listo" }).click();
   await page.getByRole("button", { name: "Marcar entregado" }).click();
   await expect(page.getByText("0 comandas activas")).toBeVisible();
-  const db = getPrisma();
-  const where = { organizationId: fixture.organizationId, branchId: fixture.branchId };
-  const balance = await db.inventoryBalance.findFirstOrThrow({ where: { ...where, ingredientId: fixture.ingredientId } });
-  expect(balance.quantity.toFixed(3)).toBe("9.500");
+  expect(snapshot().quantity).toBe("9.500");
   await page.goto("/dashboard/cash");
   await page.getByLabel("Base inicial de efectivo").fill("10000");
   await page.getByRole("button", { name: "Abrir caja" }).click();
@@ -73,10 +81,7 @@ test("owner completes POS, kitchen, stock, cash, reports and audit", async ({ pa
   await page.getByLabel("Efectivo contado (incluye base)").fill("35000");
   await page.getByRole("button", { name: "Confirmar cierre" }).click();
   await expect(page.getByRole("button", { name: "Abrir caja" })).toBeVisible();
-  const order = await db.order.findFirstOrThrow({ where, include: { payment: true } });
-  expect(order.status).toBe("COMPLETED");
-  expect(order.payment?.amount.toFixed(2)).toBe("25000.00");
-  expect((await db.cashShift.findFirstOrThrow({ where })).difference?.toFixed(2)).toBe("0.00");
+  expect(snapshot()).toEqual({ quantity: "9.500", orderStatus: "COMPLETED", payment: "25000.00", difference: "0.00" });
   await page.goto("/dashboard/reports");
   for (const [label, ext] of [["Descargar Excel", ".xlsx"], ["Descargar PDF", ".pdf"]]) {
     const pending = page.waitForEvent("download");
