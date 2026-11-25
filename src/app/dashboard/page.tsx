@@ -18,6 +18,7 @@ const modules: { name: string; detail: string; permission: string; href?: string
   { name: "Catálogo", detail: "Productos y precios", permission: "catalog.manage", href: "/dashboard/catalog" },
   { name: "Analítica", detail: "Ventas, indicadores y costos registrados", permission: "reports.read", href: "/dashboard/analytics" },
   { name: "Reportes", detail: "Exportaciones de ventas, inventario, compras y caja", permission: "reports.read", href: "/dashboard/reports" },
+  { name: "Auditoría", detail: "Historial de operaciones y cambios", permission: "team.manage", href: "/dashboard/audit" },
   { name: "Administración", detail: "Organización y equipo", permission: "team.manage", href: "/dashboard/team" },
 ];
 

@@ -92,3 +92,5 @@ Restaurant ERP is a planned multi-tenant, multi-branch platform for food-service
 Reportes empresariales: [documentación](docs/reports.md).
 
 Administración: [usuarios, roles, sucursales y cuenta](docs/team.md).
+
+Auditoría de operaciones: [documentación](docs/audit.md).

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { getPrisma } from "../../src/lib/prisma";
 import { createMember, saveBranch, saveRole, teamOverview, updateMember } from "../../src/modules/team/service";
+import { listAudit } from "../../src/modules/audit/service";
 import { changePassword } from "../../src/modules/account/service";
 import { createSession, getSession, selectContext } from "../../src/modules/auth/service";
 import { verifyPassword } from "../../src/modules/auth/password";
@@ -31,7 +32,7 @@ async function main() {
     await saveBranch(db, scope, { name: "Second", code: "SECOND", address: "" });
     const second = await db.branch.findFirstOrThrow({ where: { ...where, code: "SECOND" } });
     assert.ok(await db.membershipBranch.findFirst({ where: { ...where, membershipId: owner.id, branchId: second.id } }));
-    await assert.rejects(saveRole(db, scope, { name: "Escalation", description: "", codes: ["team.manage"] }), /permisos/);
+    assert.throws(() => saveRole(db, scope, { name: "Escalation", description: "", codes: ["team.manage"] }), /permisos/);
     const roleId = await saveRole(db, scope, { name: "Mesero", description: "", codes: ["orders.manage"] });
     const input = { name: "Staff", email, password, roleId, branchIds: [branch.id] };
     await assert.rejects(createMember(db, scope, { ...input, branchIds: [other.id] }), /sucursales/);
@@ -56,12 +57,22 @@ async function main() {
     assert.equal(await verifyPassword(newPassword, (await db.user.findUniqueOrThrow({ where: { id: member.userId } })).passwordHash), true);
     await updateMember(db, scope, { id: memberId, roleId, branchIds: [second.id], active: false });
     assert.equal((await teamOverview(db, scope)).members.find((entry) => entry.id === memberId)?.active, false);
-    console.log("Team authorization, roles, branch isolation and password rotation checks passed.");
+    const audit = await listAudit(db, scope, { page: 1 });
+    assert.equal(audit.events.filter((event) => event.action === "ROLE_CREATED").length, 1);
+    assert.equal(audit.events.filter((event) => event.action === "MEMBER_CREATED").length, 1);
+    assert.equal(audit.events.filter((event) => event.action === "MEMBER_ACCESS_UPDATED").length, 2);
+    assert.ok(audit.events.every((event) => event.membershipId === owner.id && event.organizationId === organizationId));
+    assert.ok(!JSON.stringify(audit.events).includes(password));
+    assert.ok(!JSON.stringify(audit.events).includes(email));
+    assert.equal((await listAudit(db, scope, { page: 1, branchId: other.id })).count, 0);
+    await assert.rejects(listAudit(db, { ...scope, membershipId: memberId }, { page: 1 }), /denegado/);
+    console.log("Team authorization, password rotation and audit scope checks passed.");
   } finally {
     try {
       const orgs = { organizationId: { in: ids } };
       await db.session.deleteMany({ where: { user: { OR: [{ id: userId }, { email }] } } });
       await db.membershipBranch.deleteMany({ where: orgs });
+      await db.auditEvent.deleteMany({ where: orgs });
       await db.membership.deleteMany({ where: orgs });
       await db.role.deleteMany({ where: orgs });
       await db.user.deleteMany({ where: { OR: [{ id: userId }, { email }] } });

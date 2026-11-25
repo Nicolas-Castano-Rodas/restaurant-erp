@@ -1,0 +1,3 @@
+# Auditoría de operaciones
+
+/dashboard/audit requiere team.manage y rol Propietario. Consulta de toda la organización con filtro por sucursal y tipo de acción, 50 eventos por página. Registra cambios de roles, permisos, membresías y sucursales en la misma transacción. Los nombres y rol del actor son históricos; el nombre de sucursal mostrado es actual. Detalles seleccionados, no copia íntegra de los datos. No se guardan credenciales ni contactos. No hay edición ni eliminación en la interfaz, pero un administrador de PostgreSQL puede modificar datos. No hay reconstrucción histórica. Integración operativa, auditoría de autenticación y política de retención pendientes. Aplicar npm run db:deploy.

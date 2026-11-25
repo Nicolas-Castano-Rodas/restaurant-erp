@@ -43,6 +43,7 @@ model Branch {
   purchases Purchase[]
   customers Customer[]
   couriers Courier[]
+  auditEvents AuditEvent[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, code])
@@ -111,6 +112,7 @@ model Membership {
   stockMovements StockMovement[]
   createdPurchases Purchase[] @relation("PurchaseCreatedBy")
   closedPurchases Purchase[] @relation("PurchaseClosedBy")
+  auditEvents AuditEvent[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, userId])
@@ -583,4 +585,23 @@ model Delivery {
 
   @@unique([organizationId, branchId, orderId])
   @@index([organizationId, branchId, status, createdAt])
+}
+
+model AuditEvent {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  branchId       String @db.Uuid
+  membershipId   String @db.Uuid
+  actorName      String
+  actorRole      String
+  action         String @db.VarChar(64)
+  entity         String @db.VarChar(48)
+  entityId       String @db.Uuid
+  details        Json
+  createdAt      DateTime @default(now())
+  branch         Branch @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
+  membership     Membership @relation(fields: [organizationId, membershipId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, branchId, createdAt, id], map: "AuditEvent_branch_date_idx")
+  @@index([organizationId, createdAt, id], map: "AuditEvent_org_date_idx")
 }

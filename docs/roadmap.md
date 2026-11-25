@@ -10,7 +10,7 @@
 | 5 | Cocina, pagos y caja | Cocina, caja y pagos iniciales validados; devoluciones pendientes |
 | 6 | Inventario, recetas y compras | Inventario y recetas validados; compras y recepción completas validadas; devoluciones y compras parciales pendientes |
 | 7 | Clientes, domicilios y analítica | Clientes, domicilios y analítica validados; exportaciones XLSX/PDF pasan integración; corrección de lint publicada |
-| 8 | Auditoría, pruebas, accesibilidad y rendimiento | Administración y cambio de contraseña publicados; CI y auditoría pendientes |
+| 8 | Auditoría, pruebas, accesibilidad y rendimiento | Administración y bitácora inicial publicadas; CI y auditoría operativa pendientes |
 | 9 | Despliegue, demo y materiales de lanzamiento | Pendiente |
 
 ## Definición de terminado

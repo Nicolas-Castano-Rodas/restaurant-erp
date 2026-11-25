@@ -1,3 +1,4 @@
+import { recordAudit } from "@/modules/audit/service";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { hashPassword, validPassword } from "@/modules/auth/password";
 import { normalizeEmail, validEmail } from "@/modules/auth/service";
@@ -47,11 +48,13 @@ export function saveRole(db: PrismaClient, scope: Scope, input: { id?: string; n
   return db.$transaction(async (tx) => {
     await authorize(tx, scope);
     let roleId: string;
+    let previousCodes: string[] = [];
     if (input.id) {
-      const role = await tx.role.findFirst({ where: { id: id(input.id), organizationId } });
+      const role = await tx.role.findFirst({ where: { id: id(input.id), organizationId }, include: { permissions: true } });
       if (!role || role.name === ownerName) throw new TeamError("El rol Propietario no se puede modificar.");
       await tx.role.update({ where: { id: role.id }, data: { name, description } });
       roleId = role.id;
+      previousCodes = role.permissions.map((entry) => entry.permissionCode).sort();
       await tx.rolePermission.deleteMany({ where: { roleId } });
     } else {
       roleId = (await tx.role.create({ data: { organizationId, name, description } })).id;
@@ -61,6 +64,7 @@ export function saveRole(db: PrismaClient, scope: Scope, input: { id?: string; n
       await tx.permission.upsert({ where: { code: permission.code }, create: permission, update: {} });
       await tx.rolePermission.create({ data: { roleId, permissionCode: permission.code } });
     }
+    await recordAudit(tx, scope, input.id ? "ROLE_UPDATED" : "ROLE_CREATED", "Role", roleId, { beforePermissions: previousCodes, permissions: codes.sort() });
     return roleId;
   }, { isolationLevel: "Serializable" });
 }
@@ -88,6 +92,7 @@ export async function createMember(db: PrismaClient, scope: Scope, input: { name
     const user = await tx.user.create({ data: { name, email, passwordHash } });
     const member = await tx.membership.create({ data: { organizationId, userId: user.id, roleId: input.roleId } });
     await tx.membershipBranch.createMany({ data: branchIds.map((branchId) => ({ organizationId, membershipId: member.id, branchId })) });
+    await recordAudit(tx, scope, "MEMBER_CREATED", "Membership", member.id, { roleId: input.roleId, branchIds });
     return member.id;
   }, { isolationLevel: "Serializable" });
 }
@@ -96,7 +101,7 @@ export function updateMember(db: PrismaClient, scope: Scope, input: { id: string
   const organizationId = scope.organizationId;
   return db.$transaction(async (tx) => {
     await authorize(tx, scope);
-    const member = await tx.membership.findFirst({ where: { id: id(input.id), organizationId }, include: { role: true } });
+    const member = await tx.membership.findFirst({ where: { id: id(input.id), organizationId }, include: { role: true, branches: true } });
     if (!member || member.id === scope.membershipId || member.role.name === ownerName) throw new TeamError("No puedes modificar la cuenta del propietario.");
     const branchIds = await validateAssignments(tx, organizationId, input.roleId, input.branchIds);
     await tx.membership.update({ where: { id: member.id }, data: { roleId: input.roleId, active: input.active } });
@@ -104,6 +109,7 @@ export function updateMember(db: PrismaClient, scope: Scope, input: { id: string
     await tx.membershipBranch.createMany({ data: branchIds.map((branchId) => ({ organizationId, membershipId: member.id, branchId })) });
     // Clear sessions in this membership only, never sessions in another organization.
     await tx.session.deleteMany({ where: { userId: member.userId, membershipId: member.id } });
+    await recordAudit(tx, scope, "MEMBER_ACCESS_UPDATED", "Membership", member.id, { beforeRoleId: member.roleId, roleId: input.roleId, beforeActive: member.active, active: input.active, beforeBranchIds: member.branches.map((entry) => entry.branchId), branchIds });
   }, { isolationLevel: "Serializable" });
 }
 
@@ -118,9 +124,11 @@ export function saveBranch(db: PrismaClient, scope: Scope, input: { id?: string;
     if (input.id) {
       const result = await tx.branch.updateMany({ where: { id: id(input.id), organizationId, active: true }, data: { name, code, address } });
       if (result.count !== 1) throw new TeamError("Sucursal no disponible.");
+      await recordAudit(tx, scope, "BRANCH_UPDATED", "Branch", input.id, { code });
       return;
     }
     const branch = await tx.branch.create({ data: { organizationId, name, code, address } });
     await tx.membershipBranch.create({ data: { organizationId, membershipId: scope.membershipId, branchId: branch.id } });
+    await recordAudit(tx, scope, "BRANCH_CREATED", "Branch", branch.id, { code });
   }, { isolationLevel: "Serializable" });
 }
