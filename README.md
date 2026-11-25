@@ -2,7 +2,7 @@
 
 **Plataforma de gestión gastronómica multiempresa y multisucursal | Multi-tenant restaurant management platform**
 
-> Estado: base de aplicación, identidad multiempresa y acceso inicial publicados; autenticación inicial validada; catálogo y mesas validados; POS y cocina iniciales validados; caja inicial validada; inventario manual validado; recetas y consumo automático validados; compras y clientes validados; domicilios y analítica validados; reportes XLSX/PDF publicados, validación pendiente. Las funcionalidades de negocio descritas son objetivos de desarrollo.
+> Estado: base de aplicación, identidad multiempresa y acceso inicial publicados; autenticación inicial validada; catálogo y mesas validados; POS y cocina iniciales validados; caja inicial validada; inventario manual validado; recetas y consumo automático validados; compras y clientes validados; domicilios y analítica validados; reportes XLSX/PDF pasan integración; administración de equipo y cuenta publicadas, CI pendiente. Las funcionalidades de negocio descritas son objetivos de desarrollo.
 
 ## Visión
 
@@ -90,3 +90,5 @@ Restaurant ERP is a planned multi-tenant, multi-branch platform for food-service
 
 
 Reportes empresariales: [documentación](docs/reports.md).
+
+Administración: [usuarios, roles, sucursales y cuenta](docs/team.md).

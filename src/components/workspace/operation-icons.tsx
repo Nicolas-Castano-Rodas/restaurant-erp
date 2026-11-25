@@ -54,7 +54,7 @@ export function MovementIcon({ kind }: { kind: "ENTRY" | "EXIT" | "WASTE" }) {
   return (
     <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <title>Tipo de movimiento</title>
-      {kind === "ENTRY" ? <path d="M17 7 7 17M7 7v10h10" /> : kind === "EXIT" ? <path d="m7 17 10-10M7 7h10v10" /> : <><path d="M3 6h18M9 6V3h6v3M5 6l1 14h12l1-14M10 10v6M14 10v6" /></>}
+      {kind === "ENTRY" ? <path d="M17 7 7 17M7 7v10h10" /> : kind === "EXIT" ? <path d="m7 17 10-10M7 7h10v10" /> : <path d="M3 6h18M9 6V3h6v3M5 6l1 14h12l1-14M10 10v6M14 10v6" />}
     </svg>
   );
 }

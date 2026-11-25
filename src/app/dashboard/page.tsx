@@ -18,7 +18,7 @@ const modules: { name: string; detail: string; permission: string; href?: string
   { name: "Catálogo", detail: "Productos y precios", permission: "catalog.manage", href: "/dashboard/catalog" },
   { name: "Analítica", detail: "Ventas, indicadores y costos registrados", permission: "reports.read", href: "/dashboard/analytics" },
   { name: "Reportes", detail: "Exportaciones de ventas, inventario, compras y caja", permission: "reports.read", href: "/dashboard/reports" },
-  { name: "Administración", detail: "Organización y equipo", permission: "team.manage" },
+  { name: "Administración", detail: "Organización y equipo", permission: "team.manage", href: "/dashboard/team" },
 ];
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
@@ -26,7 +26,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   if (!session) redirect("/login");
   const { error } = await searchParams;
   const { user, memberships, context } = session;
-  const visibleModules = modules.filter((module) => hasPermission(context, module.permission));
+  const visibleModules = modules.filter((module) => hasPermission(context, module.permission) && (module.permission !== "team.manage" || context?.role === "Propietario"));
   const options = memberships.flatMap((membership) => membership.branches.map(({ branch }) => ({
     value: `${membership.id}:${branch.id}`,
     label: `${membership.organization.name} · ${branch.name}`,
@@ -34,6 +34,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <div className="min-h-screen bg-canvas lg:grid lg:grid-cols-[250px_1fr]">
       <aside className="bg-ink p-6 text-white">
+        <Link href="/dashboard/account" className="mb-4 block text-sm font-semibold underline">Mi cuenta · Cambiar contraseña</Link>
         <Link href="/" className="flex items-center gap-3 font-bold">
           <span className="grid size-10 place-items-center rounded-lg bg-white text-ink" aria-hidden="true">R</span>
           Restaurant ERP

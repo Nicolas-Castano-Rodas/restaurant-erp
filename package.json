@@ -33,7 +33,8 @@
     "inventory:test": "tsx tests/integration/inventory.ts",
     "recipes:test": "tsx tests/integration/recipes.ts",
     "purchases:test": "tsx tests/integration/purchases.ts",
-    "analytics:test": "tsx tests/integration/analytics.ts"
+    "analytics:test": "tsx tests/integration/analytics.ts",
+    "team:test": "tsx tests/integration/team.ts"
   },
   "dependencies": {
     "next": "16.4.6",

@@ -99,6 +99,10 @@ jobs:
         env:
           RUN_DB_TESTS: "true"
         run: npm run analytics:test
+      - name: Team administration integration test
+        env:
+          RUN_DB_TESTS: "true"
+        run: npm run team:test
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
@@ -126,3 +130,5 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/analytics)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/reports)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/reports)" = "401"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/team)" = "307"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/account)" = "307"

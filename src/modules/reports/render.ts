@@ -20,7 +20,7 @@ export async function renderExcel(report: Report): Promise<Uint8Array> {
   intro.getColumn(2).alignment = { wrapText: true, vertical: "top" };
   intro.eachRow((row) => { row.height = 32; });
   for (const [index, table] of report.tables.entries()) {
-    const sheet = book.addWorksheet(`${index + 1} ${table.title.replace(/[:\\/?*\[\]]/g, "").slice(0, 27)}`, { views: [{ state: "frozen", ySplit: 1 }] });
+    const sheet = book.addWorksheet(`${index + 1} ${table.title.replace(/[:\\/?*[\]]/g, "").slice(0, 27)}`, { views: [{ state: "frozen", ySplit: 1 }] });
     sheet.columns = table.columns.map((column) => ({ width: column.numeric ? 21 : Math.max(19, Math.min(40, column.label.length + 8)) }));
     const header = sheet.addRow(table.columns.map((column) => column.label));
     header.height = 30;
@@ -108,7 +108,7 @@ export async function renderPdf(report: Report): Promise<Uint8Array> {
       page.drawRectangle({ x: margin, y: y - rowHeight + 5, width: available, height: rowHeight, color: ink });
       let x = margin;
       for (const [i, cell] of cells.entries()) {
-        cell.forEach((part, j) => page.drawText(part, { x: x + 6, y: y - 8 - j * leading, size, font: bold, color: rgb(1, 1, 1) }));
+        cell.forEach((part, j) => { page.drawText(part, { x: x + 6, y: y - 8 - j * leading, size, font: bold, color: rgb(1, 1, 1) }); });
         x += widths[i];
       }
       y -= rowHeight;
@@ -127,7 +127,7 @@ export async function renderPdf(report: Report): Promise<Uint8Array> {
         if (rowIndex % 2) page.drawRectangle({ x: margin, y: y - rowHeight + 5, width: available, height: rowHeight, color: rgb(0.97, 0.96, 0.94) });
         let x = margin;
         for (const [i, cell] of cells.entries()) {
-          cell.slice(offset, offset + count).forEach((part, j) => page.drawText(part, { x: x + 6, y: y - 8 - j * leading, font: normal, size, color: ink }));
+          cell.slice(offset, offset + count).forEach((part, j) => { page.drawText(part, { x: x + 6, y: y - 8 - j * leading, font: normal, size, color: ink }); });
           x += widths[i];
         }
         y -= rowHeight;
