@@ -73,8 +73,11 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
     });
   }
   return (
-    <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <section className="reference-card min-w-0 p-4">
+    <div className="grid min-w-0 items-start gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
+      <a href="#pos-cart" className="flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-xl bg-ink px-4 py-3 text-sm font-semibold text-white lg:hidden">
+        <span>Ir al pedido actual</span><span className="tabular-nums">{cart.reduce((sum, line) => sum + line.quantity, 0)} uds. · {money(total + deliveryFee)}</span>
+      </a>
+      <section id="pos-products" tabIndex={-1} className="reference-card min-w-0 p-3 sm:p-4">
         <h2 className="text-lg font-semibold">Productos</h2>
         <label className="mt-3 block text-xs text-muted">Buscar producto
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nombre..." className="mt-2 block w-full rounded-lg border border-line bg-surface px-3 py-3 text-sm" />
@@ -86,15 +89,17 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
           {filtered.map((product) => (
             <article key={product.id} className="rounded-xl border border-line bg-surface p-3">
               <div className="flex items-start gap-2"><FoodIcon /><div className="min-w-0 flex-1"><h3 className="break-words text-sm font-semibold">{product.name}</h3><p className="mt-1 text-xs text-muted">{product.category}</p><p className="mt-2 font-semibold tabular-nums">{format.format(Number(product.price))}</p></div></div>
-              <button type="button" disabled={pending} onClick={() => add(product)} className="mt-3 min-h-11 w-full rounded-lg bg-brand-soft px-2 py-2 text-sm font-semibold text-brand hover:bg-brand hover:text-white disabled:opacity-50">+ {product.variants.length ? "Base" : "Agregar"}</button>
-              {product.variants.length > 0 && <div className="mt-2 grid gap-2">{product.variants.map((variant) => <button type="button" key={variant.id} disabled={pending} onClick={() => add(product, variant)} className="min-h-11 rounded-lg border border-line p-2 text-left text-xs font-semibold hover:bg-canvas disabled:opacity-50">+ {variant.name} · {format.format(Number(variant.price))}</button>)}</div>}
+              <button type="button" disabled={pending} onClick={() => add(product)} aria-label={`Agregar ${product.name}${product.variants.length ? " (base)" : ""}`} className="mt-3 min-h-11 w-full rounded-lg bg-brand-soft px-2 py-2 text-sm font-semibold text-brand hover:bg-brand hover:text-white disabled:opacity-50">+ {product.variants.length ? "Base" : "Agregar"}</button>
+              {product.variants.length > 0 && <div className="mt-2 grid gap-2">{product.variants.map((variant) => <button type="button" key={variant.id} disabled={pending} onClick={() => add(product, variant)} aria-label={`Agregar ${product.name}, ${variant.name}`} className="min-h-11 rounded-lg border border-line p-2 text-left text-xs font-semibold hover:bg-canvas disabled:opacity-50">+ {variant.name} · {format.format(Number(variant.price))}</button>)}</div>}
             </article>
           ))}
         </div>
         {!filtered.length && <p className="py-6 text-sm text-muted">No hay productos disponibles para esta búsqueda.</p>}
+        <a href="#pos-cart" className="mt-3 flex min-h-11 items-center justify-center rounded-lg border border-brand px-3 py-2 text-sm font-semibold text-brand lg:hidden">Revisar pedido →</a>
       </section>
-      <section className="reference-card p-4 lg:sticky lg:top-4">
-        <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">Pedido actual</h2><span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">{cart.reduce((sum, line) => sum + line.quantity, 0)} uds.</span></div>
+      <section id="pos-cart" tabIndex={-1} className="reference-card min-w-0 p-3 sm:p-4 lg:sticky lg:top-4">
+        <a href="#pos-products" className="mb-3 inline-flex min-h-11 items-center text-sm font-semibold text-brand underline lg:hidden">← Volver a productos</a>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">Pedido actual</h2><span role="status" aria-atomic="true" className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">{cart.reduce((sum, line) => sum + line.quantity, 0)} uds.</span></div>
         <fieldset disabled={pending} className="space-y-3">
           <legend className="mb-2 text-xs font-semibold text-muted">Tipo de servicio</legend>
           <div className="grid grid-cols-3 gap-1">{channels.map((item) => <button type="button" key={item.id} aria-pressed={channel === item.id} onClick={() => { setChannel(item.id); setTableId(""); }} className={channel === item.id ? "min-h-11 rounded-lg bg-ink p-2 text-xs font-semibold text-white" : "min-h-11 rounded-lg border border-line p-2 text-xs font-semibold text-muted"}>{item.name}</button>)}</div>
@@ -139,7 +144,7 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
           <label className="block text-xs text-muted">Observaciones<textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={2} className="mt-2 w-full rounded-lg border border-line p-2 text-sm" /></label>
         </fieldset>
         {channel === "DELIVERY" && <div className="mt-3 space-y-1 text-sm text-muted"><p className="flex justify-between"><span>Productos</span><span>{money(total)}</span></p><p className="flex justify-between"><span>Envío</span><span>{money(deliveryFee)}</span></p></div>}
-        <div className="mt-4 flex items-center justify-between border-t border-line pt-4"><span className="font-semibold">Total estimado</span><span className="text-xl font-bold tabular-nums">{money(total + deliveryFee)}</span></div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4"><span className="font-semibold">Total estimado</span><span className="text-xl font-bold tabular-nums">{money(total + deliveryFee)}</span></div>
         <p className="mt-2 text-xs text-muted">El servidor valida precios y disponibilidad. Sin impuestos ni descuentos adicionales en esta versión.</p>
         <button type="button" onClick={save} disabled={pending || !cart.length || !deliveryValid || (channel === "DINE_IN" && !selectedTable)} className="mt-4 min-h-12 w-full rounded-lg bg-brand px-4 py-3 font-semibold text-white hover:bg-brand-hover disabled:opacity-50">{pending ? "Registrando..." : "Registrar pedido"}</button>
         {result && ("error" in result ? <p role="alert" className="mt-3 rounded-lg bg-danger-soft p-3 text-sm text-danger">{result.error}</p> : <output className="mt-3 block rounded-lg bg-success-soft p-3 text-sm text-success">Pedido registrado. <Link href="/dashboard/orders" className="font-semibold underline">Consultar pedidos</Link></output>)}

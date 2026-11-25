@@ -106,6 +106,7 @@ jobs:
         env:
           RUN_DB_TESTS: "true"
         run: npm run team:test
+      - run: npm run ui:contrast
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build

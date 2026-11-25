@@ -39,12 +39,12 @@ export default function Home() {
     <div className="min-h-screen bg-canvas text-ink">
       <a
         href="#contenido"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:p-4"
+        className="skip-link"
       >
         Saltar al contenido
       </a>
       <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-5 md:px-12">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 md:px-12">
           <a className="flex items-center gap-3 font-bold" href="/">
             <span className="grid size-11 place-items-center rounded-xl bg-ink text-lg text-white" aria-hidden="true">
               R
@@ -59,14 +59,14 @@ export default function Home() {
           </nav>
         </div>
       </header>
-      <main id="contenido" className="mx-auto max-w-7xl px-6 md:px-12">
+      <main id="contenido" tabIndex={-1} className="mx-auto max-w-7xl px-4 sm:px-6 md:px-12">
         <section className="grid items-center gap-12 py-16 lg:grid-cols-2 lg:py-24">
           <div>
             <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-wide text-brand">
               <span aria-hidden="true" className="size-2 rounded-full bg-brand" />
               Tecnología para la gastronomía
             </p>
-            <h1 className="max-w-2xl text-5xl font-bold leading-tight tracking-tight md:text-6xl">
+            <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
               Gestiona mejor.
               <span className="block text-brand">Sirve mejor.</span>
             </h1>
@@ -94,7 +94,7 @@ export default function Home() {
             </div>
             <div className="p-5 md:p-7">
               <p className="mb-5 text-sm leading-relaxed text-muted">
-                Ejemplo ilustrativo del flujo previsto. Los módulos aún no son operativos.
+                Ejemplo ilustrativo del flujo operativo. Consulta los módulos disponibles al iniciar sesión.
               </p>
               <ol className="space-y-3">
                 {workflow.map((step, index) => (

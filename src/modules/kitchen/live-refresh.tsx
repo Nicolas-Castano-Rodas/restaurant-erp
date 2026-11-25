@@ -14,7 +14,7 @@ export function LiveRefresh() {
     return () => clearInterval(timer);
   }, [enabled, router]);
   return <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
-    <label className="flex items-center gap-2"><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} className="accent-success" /> Actualizar cada 15 s</label>
-    <button type="button" onClick={() => router.refresh()} className="rounded-lg border border-line bg-surface px-3 py-2 font-semibold text-brand">Actualizar ahora</button>
+    <label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} className="accent-success" /> Actualizar cada 15 s</label>
+    <button type="button" onClick={() => router.refresh()} className="min-h-11 rounded-lg border border-line bg-surface px-3 py-2 font-semibold text-brand">Actualizar ahora</button>
   </div>;
 }

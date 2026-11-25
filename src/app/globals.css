@@ -9,6 +9,7 @@
   --primary: #c2410c;
   --primary-hover: #9a3412;
   --border: #e1dbd3;
+  --control-border: #64748b;
   --success: #0f766e;
   --warning: #92400e;
   --info: #1d4ed8;
@@ -58,7 +59,8 @@ body {
 
 :focus-visible {
   outline: 3px solid var(--info);
-  outline-offset: 4px;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px white;
 }
 
 /* Compact workspace surfaces based on the approved catalog and table references. */
@@ -92,10 +94,102 @@ body {
   background-color: #faf9f7;
 }
 
-.reference-panel input:not([type="checkbox"]),
-.reference-panel select,
-.reference-panel textarea {
-  border-color: #dedede;
+.reference-panel :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea),
+.login-form :where(input:not([type="hidden"]), select, textarea),
+.workspace-selector select {
+  border-color: var(--control-border);
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+}
+
+.reference-panel :where(button, summary) {
+  min-height: 44px;
+}
+
+.reference-panel :where(input[type="checkbox"], input[type="radio"]) {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.reference-panel :where(fieldset, form, section, article) {
+  min-width: 0;
+}
+
+.reference-panel :where(h1, h2, h3, p, span, label, summary, button, a, dd) {
+  overflow-wrap: anywhere;
+}
+
+.reference-card :where(summary, button):focus-visible {
+  outline-offset: -3px;
+}
+
+.reference-panel :where([id][tabindex="-1"]) {
+  scroll-margin-top: 16px;
+}
+
+.skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link:focus {
+  position: fixed;
+  inset: 12px auto auto 12px;
+  z-index: 100;
+  width: auto;
+  height: auto;
+  max-width: calc(100% - 24px);
+  padding: 12px 16px;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.workspace-menu summary {
+  list-style: none;
+}
+.workspace-menu summary::-webkit-details-marker {
+  display: none;
+}
+.workspace-menu[open] .menu-chevron {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 639px) {
+  .reference-panel {
+    padding: 10px;
+    border-radius: 14px;
+  }
+  .reference-panel :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea),
+  .login-form :where(input, select, textarea),
+  .workspace-selector select {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 359px) {
+  .reference-panel .compact-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Inventory movement form: full-width fields and three real choice buttons. */
@@ -191,7 +285,7 @@ body {
   width: 100%;
   min-width: 0;
   min-height: 58px;
-  border: 1px solid #e2e2e2;
+  border: 1px solid var(--control-border);
   border-radius: 15px;
   padding: 14px;
   background: var(--surface);

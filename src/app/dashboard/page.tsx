@@ -22,6 +22,20 @@ const modules: { name: string; detail: string; permission: string; href?: string
   { name: "Administración", detail: "Organización y equipo", permission: "team.manage", href: "/dashboard/team" },
 ];
 
+function WorkspaceNavigation({ visibleModules }: { visibleModules: typeof modules }) {
+  return <>
+    <nav aria-label="Menú administrativo" className="mt-4 lg:mt-8">
+      <Link href="/dashboard" aria-current="page" className="flex min-h-11 items-center rounded-lg bg-white/15 px-4 py-3 text-sm font-semibold">Resumen</Link>
+      <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-widest text-slate-300">Módulos</p>
+      {visibleModules.map((entry) => entry.href ? <Link key={entry.name} href={entry.href} prefetch={false} className="flex min-h-11 items-center rounded-lg px-4 py-2 text-sm text-white hover:bg-white/10">{entry.name}</Link> : <p key={entry.name} className="px-4 py-2 text-sm text-slate-300">{entry.name}</p>)}
+      <Link href="/dashboard/account" prefetch={false} className="mt-3 flex min-h-11 items-center rounded-lg px-4 py-2 text-sm font-semibold underline">Mi cuenta</Link>
+    </nav>
+    <form action={logout} className="mt-4">
+      <button type="submit" className="min-h-11 w-full rounded-lg border border-white/50 px-4 py-3 text-left text-sm font-semibold hover:bg-white/10">Cerrar sesión</button>
+    </form>
+  </>;
+}
+
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const session = await currentSession();
   if (!session) redirect("/login");
@@ -33,25 +47,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     label: `${membership.organization.name} · ${branch.name}`,
   })));
   return (
-    <div className="min-h-screen bg-canvas lg:grid lg:grid-cols-[250px_1fr]">
-      <aside className="bg-ink p-6 text-white">
-        <Link href="/dashboard/account" className="mb-4 block text-sm font-semibold underline">Mi cuenta · Cambiar contraseña</Link>
-        <Link href="/" className="flex items-center gap-3 font-bold">
-          <span className="grid size-10 place-items-center rounded-lg bg-white text-ink" aria-hidden="true">R</span>
+    <div className="min-h-screen bg-canvas lg:grid lg:grid-cols-[250px_minmax(0,1fr)]">
+      <a href="#dashboard-content" className="skip-link">Saltar al contenido</a>
+      <aside className="bg-ink p-4 text-white sm:p-6">
+        <Link href="/" className="flex min-h-11 items-center gap-3 font-bold">
+          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-ink" aria-hidden="true">R</span>
           Restaurant ERP
         </Link>
-        <nav aria-label="Menú administrativo" className="mt-10">
-          <Link href="/dashboard" aria-current="page" className="block rounded-lg bg-white/15 px-4 py-3 text-sm font-semibold">Resumen</Link>
-          <p className="mb-3 mt-8 text-xs font-semibold uppercase tracking-widest text-slate-300">Módulos</p>
-          {visibleModules.map((module) => (
-            module.href ? <Link key={module.name} href={module.href} prefetch={false} className="block rounded-lg px-4 py-2 text-sm text-white hover:bg-white/10">{module.name}</Link> : <p key={module.name} className="px-4 py-2 text-sm text-slate-300">{module.name}</p>
-          ))}
-        </nav>
-        <form action={logout} className="mt-8">
-          <button type="submit" className="w-full rounded-lg border border-white/30 px-4 py-3 text-left text-sm font-semibold hover:bg-white/10">Cerrar sesión</button>
-        </form>
+        <details className="workspace-menu mt-3 rounded-lg border border-white/30 p-2 lg:hidden">
+          <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-semibold">
+            <span>Menú de trabajo</span><span aria-hidden="true" className="menu-chevron text-lg">⌄</span>
+          </summary>
+          <WorkspaceNavigation visibleModules={visibleModules} />
+        </details>
+        <div className="hidden lg:block"><WorkspaceNavigation visibleModules={visibleModules} /></div>
       </aside>
-      <main className="min-w-0 p-6 md:p-10">
+      <main id="dashboard-content" tabIndex={-1} className="min-w-0 break-words p-3 sm:p-6 md:p-10">
         <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-brand">Espacio de trabajo</p>
@@ -65,8 +76,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {error === "permission" && <p role="alert" className="mt-3 text-sm text-danger">Selecciona una sucursal autorizada y verifica tus permisos.</p>}
           {error === "context" && <p role="alert" className="mt-3 text-sm text-danger">No tienes acceso a la selección solicitada.</p>}
           {options.length ? (
-            <form action={changeContext} className="mt-4 flex flex-wrap items-end gap-3">
-              <div className="min-w-0 flex-1">
+            <form action={changeContext} className="workspace-selector mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="w-full min-w-0 flex-1">
                 <label htmlFor="context" className="mb-2 block text-sm font-semibold">Seleccionar espacio de trabajo</label>
                 <select id="context" name="context" required defaultValue={context ? `${context.membershipId}:${context.branch.id}` : ""} className="w-full rounded-lg border border-line bg-surface p-3">
                   <option value="" disabled>Seleccionar</option>
@@ -87,7 +98,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   <span className="text-xs font-semibold text-brand">{module.href ? "Disponible" : "Próximamente"}</span>
                   <h3 className="mt-3 text-lg font-bold">{module.name}</h3>
                   <p className="mt-2 text-sm text-muted">{module.detail}</p>
-                  {module.href && <Link href={module.href} prefetch={false} className="mt-4 inline-block text-sm font-semibold text-brand hover:underline">Abrir módulo →</Link>}
+                  {module.href && <Link href={module.href} prefetch={false} className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-brand hover:underline">Abrir módulo →</Link>}
                 </article>
               ))}
             </div>

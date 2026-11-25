@@ -34,7 +34,8 @@
     "recipes:test": "tsx tests/integration/recipes.ts",
     "purchases:test": "tsx tests/integration/purchases.ts",
     "analytics:test": "tsx tests/integration/analytics.ts",
-    "team:test": "tsx tests/integration/team.ts"
+    "team:test": "tsx tests/integration/team.ts",
+    "ui:contrast": "node scripts/check-contrast.mjs"
   },
   "dependencies": {
     "next": "16.4.6",
