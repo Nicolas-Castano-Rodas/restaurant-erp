@@ -54,6 +54,7 @@ async function main() {
       await db.order.deleteMany({ where });
       await db.restaurantTable.deleteMany({ where });
       await db.membershipBranch.deleteMany({ where });
+      await db.auditEvent.deleteMany({ where });
       await db.membership.deleteMany({ where });
       await db.role.deleteMany({ where });
       await db.user.deleteMany({ where: { id: userId } });

@@ -1,3 +1,4 @@
+import { recordAudit } from "@/modules/audit/service";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { fromMinor, toMinor } from "@/modules/orders/money";
 
@@ -31,7 +32,9 @@ export function openShift(db: PrismaClient, scope: Scope, opening: string) {
   return db.$transaction(async (tx) => {
     const currency = await authorize(tx, scope);
     if (await tx.cashShift.findFirst({ where: { organizationId, branchId, status: "OPEN" } })) throw new CashError("Ya existe una caja abierta.");
-    return tx.cashShift.create({ data: { organizationId, branchId, openedById: membershipId, currency, openingAmount } });
+    const shift = await tx.cashShift.create({ data: { organizationId, branchId, openedById: membershipId, currency, openingAmount } });
+    await recordAudit(tx, scope, "SHIFT_OPENED", "CashShift", shift.id, { openingAmount, currency });
+    return shift;
   }, { isolationLevel: "Serializable" });
 }
 
@@ -57,7 +60,9 @@ export function payOrder(db: PrismaClient, scope: Scope, orderId: string, method
     if (received < total) throw new CashError("El efectivo recibido es insuficiente.");
     const changed = await tx.order.updateMany({ where: { id: orderId, organizationId, branchId, status: "OPEN", kitchenStatus: "SERVED" }, data: { status: "COMPLETED", closedAt: new Date(), closedById: membershipId } });
     if (changed.count !== 1) throw new CashError("El pedido cambió. Actualiza la página.");
-    return tx.payment.create({ data: { organizationId, branchId, orderId, shiftId: shift.id, membershipId, currency, method, amount: fromMinor(total), received: fromMinor(received), change: fromMinor(received - total) } });
+    const payment = await tx.payment.create({ data: { organizationId, branchId, orderId, shiftId: shift.id, membershipId, currency, method, amount: fromMinor(total), received: fromMinor(received), change: fromMinor(received - total) } });
+    await recordAudit(tx, scope, "ORDER_PAID", "Order", orderId, { paymentId: payment.id, method, amount: fromMinor(total), currency, shiftId: shift.id });
+    return payment;
   }, { isolationLevel: "Serializable" });
 }
 
@@ -68,6 +73,7 @@ export function cancelOrder(db: PrismaClient, scope: Scope, orderId: string, rea
     await authorize(tx, scope);
     const changed = await tx.order.updateMany({ where: { id: orderId, organizationId, branchId, status: "OPEN", payment: null }, data: { status: "CANCELLED", closedAt: new Date(), closedById: membershipId, cancelReason: reason.trim() } });
     if (changed.count !== 1) throw new CashError("Solo puedes cancelar un pedido abierto sin pago.");
+    await recordAudit(tx, scope, "ORDER_CANCELLED", "Order", orderId, { before: "OPEN", after: "CANCELLED" });
   }, { isolationLevel: "Serializable" });
 }
 
@@ -84,6 +90,7 @@ export function closeShift(db: PrismaClient, scope: Scope, shiftId: string, coun
     if (expected > 9999999999999999n) throw new CashError("El saldo supera el máximo permitido.");
     const changed = await tx.cashShift.updateMany({ where: { id: shiftId, organizationId, branchId, status: "OPEN" }, data: { status: "CLOSED", closedById: membershipId, closedAt: new Date(), expectedAmount: fromMinor(expected), countedAmount: fromMinor(counted), difference: signed(counted - expected) } });
     if (changed.count !== 1) throw new CashError("El turno cambió. Actualiza la página.");
+    await recordAudit(tx, scope, "SHIFT_CLOSED", "CashShift", shiftId, { expected: fromMinor(expected), counted: fromMinor(counted), difference: signed(counted - expected), currency: shift.currency });
   }, { isolationLevel: "Serializable" });
 }
 

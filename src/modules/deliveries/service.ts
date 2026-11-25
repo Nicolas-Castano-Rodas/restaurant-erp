@@ -1,3 +1,4 @@
+import { recordAudit } from "@/modules/audit/service";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 type Scope = { organizationId: string; branchId: string; membershipId: string };
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -15,11 +16,17 @@ export function saveCourier(db: PrismaClient, scope: Scope, input: { id?: string
   return db.$transaction(async (tx) => {
     await authorize(tx, scope);
     const data = { name, phone: phone || null, active: input.active };
-    if (!input.id) return tx.courier.create({ data: { organizationId, branchId, ...data } });
+    if (!input.id) {
+      const courier = await tx.courier.create({ data: { organizationId, branchId, ...data } });
+      await recordAudit(tx, scope, "COURIER_CREATED", "Courier", courier.id, { active: input.active });
+      return courier;
+    }
     const courier = await tx.courier.findFirst({ where: { id: input.id, organizationId, branchId } });
     if (!courier) throw new DeliveryError("Domiciliario no disponible.");
     if (!input.active && await tx.delivery.findFirst({ where: { organizationId, branchId, courierId: courier.id, status: { in: ["ASSIGNED", "DISPATCHED"] }, order: { status: "OPEN" } } })) throw new DeliveryError("El domiciliario tiene entregas activas.");
-    return tx.courier.update({ where: { id: courier.id }, data });
+    const updated = await tx.courier.update({ where: { id: courier.id }, data });
+    await recordAudit(tx, scope, "COURIER_UPDATED", "Courier", courier.id, { beforeActive: courier.active, active: input.active });
+    return updated;
   }, { isolationLevel: "Serializable" });
 }
 export function assignCourier(db: PrismaClient, scope: Scope, deliveryId: string, courierId: string) {
@@ -30,6 +37,7 @@ export function assignCourier(db: PrismaClient, scope: Scope, deliveryId: string
     if (!await tx.courier.findFirst({ where: { id: courierId, organizationId, branchId, active: true } })) throw new DeliveryError("Domiciliario no disponible.");
     const changed = await tx.delivery.updateMany({ where: { id: deliveryId, organizationId, branchId, status: { in: ["PENDING", "ASSIGNED"] }, order: { status: "OPEN", channel: "DELIVERY" } }, data: { courierId, status: "ASSIGNED", assignedAt: new Date() } });
     if (changed.count !== 1) throw new DeliveryError("Solo puedes asignar pedidos sin despachar.");
+    await recordAudit(tx, scope, "DELIVERY_ASSIGNED", "Delivery", deliveryId, { courierId, after: "ASSIGNED" });
   }, { isolationLevel: "Serializable" });
 }
 export function advanceDelivery(db: PrismaClient, scope: Scope, deliveryId: string, target: "DISPATCHED" | "DELIVERED") {
@@ -45,6 +53,7 @@ export function advanceDelivery(db: PrismaClient, scope: Scope, deliveryId: stri
     if (target === "DISPATCHED" && (delivery.order.kitchenStatus !== "SERVED" || !delivery.courier?.active)) throw new DeliveryError("Confirma la entrega desde cocina y el domiciliario activo antes del despacho.");
     const result = await tx.delivery.updateMany({ where: { id: deliveryId, organizationId, branchId, status: expected, order: { status: "OPEN" } }, data: { status: target, ...(target === "DISPATCHED" ? { dispatchedAt: new Date() } : { deliveredAt: new Date() }) } });
     if (result.count !== 1) throw new DeliveryError("El domicilio cambió. Actualiza la página.");
+    await recordAudit(tx, scope, "DELIVERY_TRANSITION", "Delivery", deliveryId, { before: expected, after: target });
   }, { isolationLevel: "Serializable" });
 }
 export async function deliveryOverview(db: PrismaClient, organizationId: string, branchId: string) {

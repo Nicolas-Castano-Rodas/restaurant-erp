@@ -1,3 +1,4 @@
+import { recordAudit } from "@/modules/audit/service";
 import { createHash } from "node:crypto";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { fromMinor, toMinor } from "./money";
@@ -97,6 +98,7 @@ export async function createOrder(db: PrismaClient, scope: Scope, input: OrderIn
       }, select: { id: true } });
       await tx.orderLine.createMany({ data: lines.map((line) => ({ ...line, organizationId, orderId: order.id })) });
       if (data.delivery) await tx.delivery.create({ data: { organizationId, branchId, orderId: order.id, recipient: data.delivery.recipient, phone: data.delivery.phone, address: data.delivery.address, instructions: data.delivery.instructions || null } });
+      await recordAudit(tx, scope, "ORDER_CREATED", "Order", order.id, { channel: data.channel, total, currency: membership.organization.currency, lines: lines.length });
       return order.id;
     }, { isolationLevel: "Serializable" });
   } catch (error) {

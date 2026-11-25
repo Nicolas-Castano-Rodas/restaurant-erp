@@ -45,6 +45,7 @@ async function main() {
     assert.equal((await balance(rice.id)).quantity.toFixed(3), "5.000");
     assert.equal((await db.purchase.findUniqueOrThrow({ where: { id: purchase.id } })).status, "DRAFT");
     assert.equal(await db.stockMovement.count({ where: { ...where, purchaseId: purchase.id } }), 0);
+    assert.equal(await db.auditEvent.count({ where: { ...where, entityId: purchase.id, action: "PURCHASE_RECEIVED" } }), 0);
     await db.ingredient.update({ where: { id: eggs.id }, data: { active: true } });
     await finishPurchase(db, scope, purchase.id, "RECEIVED");
     await finishPurchase(db, scope, purchase.id, "RECEIVED");
@@ -52,6 +53,7 @@ async function main() {
     assert.equal((await balance(rice.id)).unitCost?.toFixed(2), "4000.50");
     assert.equal((await balance(eggs.id)).quantity.toFixed(3), "2.000");
     assert.equal(await db.stockMovement.count({ where: { ...where, purchaseId: purchase.id } }), 2);
+    assert.equal(await db.auditEvent.count({ where: { ...where, entityId: purchase.id, action: "PURCHASE_RECEIVED" } }), 1);
     await assert.rejects(savePurchaseLine(db, scope, line), /pendientes/);
     await assert.rejects(finishPurchase(db, scope, purchase.id, "CANCELLED"), /cerrada/);
     const cancelled = await createPurchase(db, scope, { ...input, requestId: randomUUID() });
@@ -71,6 +73,7 @@ async function main() {
       await db.inventoryBalance.deleteMany({ where });
       await db.ingredient.deleteMany({ where });
       await db.membershipBranch.deleteMany({ where });
+      await db.auditEvent.deleteMany({ where });
       await db.membership.deleteMany({ where });
       await db.role.deleteMany({ where });
       await db.user.deleteMany({ where: { id: userId } });

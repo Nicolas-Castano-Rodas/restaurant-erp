@@ -1,3 +1,4 @@
+import { recordAudit } from "@/modules/audit/service";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { consumeRecipeIngredients } from "@/modules/recipes/service";
 
@@ -34,6 +35,7 @@ export async function advanceKitchen(db: PrismaClient, scope: Scope, orderId: st
     });
     if (result.count !== 1) return false;
     if (target === "PREPARING") await consumeRecipeIngredients(tx, scope, orderId);
+    await recordAudit(tx, scope, "KITCHEN_TRANSITION", "Order", orderId, { before: expected, after: target });
     return true;
   }, { isolationLevel: "Serializable" });
 }

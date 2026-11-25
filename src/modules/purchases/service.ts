@@ -1,3 +1,4 @@
+import { recordAudit } from "@/modules/audit/service";
 import { randomUUID } from "node:crypto";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { fromMilli, InventoryError, toMilli } from "@/modules/inventory/service";
@@ -32,9 +33,14 @@ export function saveSupplier(db: PrismaClient, scope: Scope, input: { id?: strin
   const data = { name, taxId: optional(input.taxId, 40), phone: optional(input.phone, 40), email, active: input.active };
   return db.$transaction(async (tx) => {
     await authorize(tx, scope);
-    if (!input.id) return tx.supplier.create({ data: { organizationId: scope.organizationId, ...data } });
+    if (!input.id) {
+      const supplier = await tx.supplier.create({ data: { organizationId: scope.organizationId, ...data } });
+      await recordAudit(tx, scope, "SUPPLIER_CREATED", "Supplier", supplier.id, { active: input.active });
+      return supplier;
+    }
     const result = await tx.supplier.updateMany({ where: { id: id(input.id), organizationId: scope.organizationId }, data });
     if (result.count !== 1) throw new InventoryError("Proveedor no encontrado.");
+    await recordAudit(tx, scope, "SUPPLIER_UPDATED", "Supplier", input.id, { active: input.active });
   }, { isolationLevel: "Serializable" });
 }
 
@@ -54,7 +60,9 @@ export function createPurchase(db: PrismaClient, scope: Scope, input: { supplier
     }
     const supplier = await tx.supplier.findFirst({ where: { id: supplierId, organizationId, active: true } });
     if (!supplier) throw new InventoryError("Proveedor no disponible.");
-    return tx.purchase.create({ data: { ...key, supplierId, supplierName: supplier.name, createdById: membershipId, reference, note, currency } });
+    const purchase = await tx.purchase.create({ data: { ...key, supplierId, supplierName: supplier.name, createdById: membershipId, reference, note, currency } });
+    await recordAudit(tx, scope, "PURCHASE_CREATED", "Purchase", purchase.id, { supplierId, currency });
+    return purchase;
   }, { isolationLevel: "Serializable" });
 }
 
@@ -95,6 +103,7 @@ export function savePurchaseLine(db: PrismaClient, scope: Scope, input: { purcha
       await tx.purchaseLine.create({ data: { ...key, ...data } });
     }
     await updateTotal(tx, scope, purchase.id);
+    await recordAudit(tx, scope, "PURCHASE_LINE_SAVED", "Purchase", purchase.id, { ingredientId: ingredient.id, beforeQuantity: existing?.quantity.toFixed(3) ?? null, quantity: fromMilli(quantity), beforeUnitCost: existing?.unitCost.toFixed(2) ?? null, unitCost: fromMinor(cost) });
   }, { isolationLevel: "Serializable" });
 }
 
@@ -106,6 +115,7 @@ export function removePurchaseLine(db: PrismaClient, scope: Scope, purchaseId: s
     const result = await tx.purchaseLine.deleteMany({ where: { id: id(lineId), organizationId: scope.organizationId, branchId: scope.branchId, purchaseId } });
     if (result.count !== 1) throw new InventoryError("Ingrediente no encontrado en la compra.");
     await updateTotal(tx, scope, purchaseId);
+    await recordAudit(tx, scope, "PURCHASE_LINE_REMOVED", "Purchase", purchaseId, { lineId });
   }, { isolationLevel: "Serializable" });
 }
 
@@ -120,6 +130,7 @@ export function finishPurchase(db: PrismaClient, scope: Scope, purchaseId: strin
     if (target === "RECEIVED" && (!purchase.lines.length || purchase.currency !== currency)) throw new InventoryError("Agrega ingredientes y verifica la moneda antes de recibir.");
     const changed = await tx.purchase.updateMany({ where: { organizationId, branchId, id: purchase.id, status: "DRAFT" }, data: { status: target, closedAt: new Date(), closedById: membershipId } });
     if (changed.count !== 1) throw new InventoryError("La compra cambió. Actualiza la página.");
+    await recordAudit(tx, scope, target === "RECEIVED" ? "PURCHASE_RECEIVED" : "PURCHASE_CANCELLED", "Purchase", purchase.id, { before: purchase.status, after: target, total: purchase.total.toFixed(2), currency, lines: purchase.lines.length });
     if (target === "CANCELLED") return;
     for (const line of purchase.lines.sort((a, b) => a.ingredientId.localeCompare(b.ingredientId))) {
       const ingredient = await tx.ingredient.findFirst({ where: { id: line.ingredientId, organizationId, active: true, unit: line.unit } });

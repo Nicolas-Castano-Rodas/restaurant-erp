@@ -1,3 +1,4 @@
+import { recordAudit } from "@/modules/audit/service";
 import type { PrismaClient } from "@/generated/prisma/client";
 
 type Scope = { organizationId: string; branchId: string; membershipId: string };
@@ -15,9 +16,14 @@ export function saveCustomer(db: PrismaClient, scope: Scope, input: Input) {
   return db.$transaction(async (tx) => {
     const member = await tx.membership.findFirst({ where: { id: membershipId, organizationId, active: true, user: { active: true }, organization: { active: true }, role: { permissions: { some: { permissionCode: "orders.manage" } } }, branches: { some: { branchId, branch: { active: true } } } }, select: { id: true } });
     if (!member) throw new CustomerError("No tienes autorización para esta sucursal.");
-    if (!input.id) return tx.customer.create({ data: { organizationId, branchId, ...data } });
+    if (!input.id) {
+      const customer = await tx.customer.create({ data: { organizationId, branchId, ...data } });
+      await recordAudit(tx, scope, "CUSTOMER_CREATED", "Customer", customer.id, { active: input.active });
+      return customer;
+    }
     const result = await tx.customer.updateMany({ where: { id: input.id, organizationId, branchId }, data });
     if (result.count !== 1) throw new CustomerError("Cliente no encontrado en esta sucursal.");
+    await recordAudit(tx, scope, "CUSTOMER_UPDATED", "Customer", input.id, { active: input.active });
     return tx.customer.findUniqueOrThrow({ where: { id: input.id } });
   }, { isolationLevel: "Serializable" });
 }

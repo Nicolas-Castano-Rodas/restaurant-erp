@@ -1,3 +1,4 @@
+import { recordAudit } from "@/modules/audit/service";
 import { randomUUID } from "node:crypto";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { fromMilli, InventoryError, toMilli } from "@/modules/inventory/service";
@@ -28,8 +29,9 @@ export function saveRecipeLine(db: PrismaClient, scope: Scope, input: RecipeInpu
     if (ingredient.unit === "UNIT" && quantity % 1000n !== 0n) throw new InventoryError("Las unidades deben ser enteras.");
     const key = { organizationId, productId, variantId, ingredientId };
     const existing = await tx.recipeLine.findFirst({ where: key });
-    if (existing) return tx.recipeLine.update({ where: { id: existing.id }, data: { quantity: fromMilli(quantity) } });
-    return tx.recipeLine.create({ data: { ...key, quantity: fromMilli(quantity) } });
+    const line = existing ? await tx.recipeLine.update({ where: { id: existing.id }, data: { quantity: fromMilli(quantity) } }) : await tx.recipeLine.create({ data: { ...key, quantity: fromMilli(quantity) } });
+    await recordAudit(tx, scope, "RECIPE_LINE_SAVED", "RecipeLine", line.id, { productId, variantId, ingredientId, beforeQuantity: existing?.quantity.toFixed(3) ?? null, quantity: fromMilli(quantity) });
+    return line;
   }, { isolationLevel: "Serializable" });
 }
 
@@ -39,6 +41,7 @@ export function removeRecipeLine(db: PrismaClient, scope: Scope, id: string) {
     await authorize(tx, scope);
     const result = await tx.recipeLine.deleteMany({ where: { id, organizationId: scope.organizationId } });
     if (result.count !== 1) throw new InventoryError("El ingrediente ya no forma parte de la receta.");
+    await recordAudit(tx, scope, "RECIPE_LINE_REMOVED", "RecipeLine", id, {});
   }, { isolationLevel: "Serializable" });
 }
 

@@ -1,3 +1,4 @@
+import { recordAudit } from "@/modules/audit/service";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 type Scope = { organizationId: string; branchId: string; membershipId: string };
@@ -42,6 +43,7 @@ export function createIngredient(db: PrismaClient, scope: Scope, nameInput: stri
     await authorize(tx, scope);
     const ingredient = await tx.ingredient.create({ data: { organizationId: scope.organizationId, name, unit } });
     await tx.inventoryBalance.create({ data: { organizationId: scope.organizationId, branchId: scope.branchId, ingredientId: ingredient.id, minimum: fromMilli(minimum) } });
+    await recordAudit(tx, scope, "INGREDIENT_CREATED", "Ingredient", ingredient.id, { unit, minimum: fromMilli(minimum) });
     return ingredient;
   }, { isolationLevel: "Serializable" });
 }
@@ -58,7 +60,10 @@ export function configureBalance(db: PrismaClient, scope: Scope, ingredientId: s
     if (!ingredient) throw new InventoryError("Ingrediente no disponible.");
     checkUnit(ingredient.unit, minimum);
     const key = { organizationId, branchId, ingredientId };
-    return tx.inventoryBalance.upsert({ where: { organizationId_branchId_ingredientId: key }, create: { ...key, minimum: fromMilli(minimum), ...cost }, update: { minimum: fromMilli(minimum), ...cost } });
+    const previous = await tx.inventoryBalance.findUnique({ where: { organizationId_branchId_ingredientId: key } });
+    const balance = await tx.inventoryBalance.upsert({ where: { organizationId_branchId_ingredientId: key }, create: { ...key, minimum: fromMilli(minimum), ...cost }, update: { minimum: fromMilli(minimum), ...cost } });
+    await recordAudit(tx, scope, "INVENTORY_CONFIGURED", "Ingredient", ingredientId, { beforeMinimum: previous?.minimum.toFixed(3) ?? null, minimum: balance.minimum.toFixed(3), beforeCost: previous?.unitCost?.toFixed(2) ?? null, unitCost: balance.unitCost?.toFixed(2) ?? null });
+    return balance;
   }, { isolationLevel: "Serializable" });
 }
 
@@ -85,7 +90,9 @@ export function recordMovement(db: PrismaClient, scope: Scope, input: { ingredie
     if (next < 0n) throw new InventoryError("Existencias insuficientes para esta salida.");
     const balanceAfter = fromMilli(next);
     await tx.inventoryBalance.update({ where: { organizationId_branchId_ingredientId: key }, data: { quantity: balanceAfter } });
-    return tx.stockMovement.create({ data: { ...key, membershipId, requestId, kind, quantity: fromMilli(quantity), balanceAfter, reason } });
+    const movement = await tx.stockMovement.create({ data: { ...key, membershipId, requestId, kind, quantity: fromMilli(quantity), balanceAfter, reason } });
+    await recordAudit(tx, scope, "STOCK_MOVED", "StockMovement", movement.id, { ingredientId, kind, quantity: fromMilli(quantity), before: fromMilli(current), after: balanceAfter });
+    return movement;
   }, { isolationLevel: "Serializable" });
 }
 

@@ -39,6 +39,7 @@ async function main() {
     try {
       await db.order.deleteMany({ where: { organizationId } });
       await db.membershipBranch.deleteMany({ where: { organizationId } });
+      await db.auditEvent.deleteMany({ where: { organizationId } });
       await db.membership.deleteMany({ where: { organizationId } });
       await db.role.deleteMany({ where: { organizationId } });
       await db.user.deleteMany({ where: { id: userId } });
