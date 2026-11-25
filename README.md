@@ -94,3 +94,5 @@ Reportes empresariales: [documentación](docs/reports.md).
 Administración: [usuarios, roles, sucursales y cuenta](docs/team.md).
 
 Auditoría de operaciones: [documentación](docs/audit.md).
+
+Seguridad: [sesiones y encabezados HTTP](docs/security.md).

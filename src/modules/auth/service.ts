@@ -4,6 +4,8 @@ import { verifyPassword } from "./password";
 
 export const SESSION_SECONDS = 12 * 60 * 60;
 export const SESSION_COOKIE = "restaurant_session";
+export const IDLE_SESSION_MS = 2 * 60 * 60 * 1000;
+const SESSION_TOUCH_MS = 5 * 60 * 1000;
 const WINDOW_MS = 15 * 60 * 1000;
 
 function digest(value: string): string {
@@ -22,7 +24,7 @@ function validToken(token: string): boolean {
   return /^[a-f0-9]{64}$/.test(token);
 }
 
-async function consumeAttempt(db: PrismaClient, identity: string, limit: number): Promise<boolean> {
+export async function consumeAttempt(db: PrismaClient, identity: string, limit: number): Promise<boolean> {
   const bucket = Math.floor(Date.now() / WINDOW_MS);
   const key = digest(`login:${identity}:${bucket}`);
   const attempt = await db.loginAttempt.upsert({
@@ -34,7 +36,7 @@ async function consumeAttempt(db: PrismaClient, identity: string, limit: number)
   return attempt.count <= limit;
 }
 
-export async function authenticate(db: PrismaClient, rawEmail: string, password: string) {
+async function checkCredentials(db: PrismaClient, rawEmail: string, password: string) {
   const email = normalizeEmail(rawEmail);
   if (!validEmail(email) || Buffer.byteLength(password, "utf8") > 256) return null;
   if (!(await consumeAttempt(db, "global", 300))) return null;
@@ -45,7 +47,28 @@ export async function authenticate(db: PrismaClient, rawEmail: string, password:
     select: { id: true, active: true, passwordHash: true },
   });
   const verified = await verifyPassword(password, user?.passwordHash ?? null);
-  return verified && user?.active ? user.id : null;
+  if (verified && user?.active) return user;
+  if (user) await db.securityEvent.create({ data: { userId: user.id, kind: "LOGIN_REJECTED" } });
+  return null;
+}
+
+export async function authenticate(db: PrismaClient, rawEmail: string, password: string) {
+  return (await checkCredentials(db, rawEmail, password))?.id ?? null;
+}
+
+// Lock the verified user row before issuing the session to serialize password changes.
+export async function signIn(db: PrismaClient, email: string, password: string) {
+  const verified = await checkCredentials(db, email, password);
+  if (!verified) return null;
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + SESSION_SECONDS * 1000);
+  return db.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<{ active: boolean; passwordHash: string | null }[]>`SELECT "active", "passwordHash" FROM "User" WHERE "id" = ${verified.id}::uuid FOR UPDATE`;
+    if (!rows[0]?.active || rows[0].passwordHash !== verified.passwordHash) return null;
+    await tx.session.create({ data: { tokenHash: digest(token), userId: verified.id, expiresAt } });
+    await tx.securityEvent.create({ data: { userId: verified.id, kind: "LOGIN_SUCCEEDED" } });
+    return { token, expiresAt };
+  });
 }
 
 export async function createSession(db: PrismaClient, userId: string) {
@@ -56,21 +79,35 @@ export async function createSession(db: PrismaClient, userId: string) {
 }
 
 export async function revokeSession(db: PrismaClient, token: string) {
-  if (validToken(token)) await db.session.deleteMany({ where: { tokenHash: digest(token) } });
+  if (!validToken(token)) return;
+  await db.$transaction(async (tx) => {
+    const tokenHash = digest(token);
+    const session = await tx.session.findUnique({ where: { tokenHash }, select: { userId: true } });
+    if (!session) return;
+    const result = await tx.session.deleteMany({ where: { tokenHash } });
+    if (result.count === 1) await tx.securityEvent.create({ data: { userId: session.userId, kind: "SESSION_REVOKED" } });
+  });
 }
 
 export async function getSession(db: PrismaClient, token: string) {
   if (!validToken(token)) return null;
+  const now = new Date();
+  const idleSince = new Date(now.getTime() - IDLE_SESSION_MS);
   const session = await db.session.findFirst({
-    where: { tokenHash: digest(token), expiresAt: { gt: new Date() }, user: { active: true } },
+    where: { tokenHash: digest(token), expiresAt: { gt: now }, lastSeenAt: { gt: idleSince }, user: { active: true } },
     select: {
       tokenHash: true,
+      lastSeenAt: true,
       membershipId: true,
       branchId: true,
       user: { select: { id: true, name: true, email: true } },
     },
   });
   if (!session) return null;
+  if (session.lastSeenAt.getTime() <= now.getTime() - SESSION_TOUCH_MS) {
+    const refreshed = await db.session.updateMany({ where: { tokenHash: session.tokenHash, expiresAt: { gt: now }, lastSeenAt: { gt: idleSince }, user: { active: true } }, data: { lastSeenAt: now } });
+    if (refreshed.count !== 1) return null;
+  }
   const memberships = await db.membership.findMany({
     where: { userId: session.user.id, active: true, organization: { active: true } },
     orderBy: { createdAt: "asc" },
@@ -104,7 +141,7 @@ export async function selectContext(db: PrismaClient, token: string, membershipI
   );
   if (!allowed) return false;
   const result = await db.session.updateMany({
-    where: { tokenHash: digest(token), userId: session.user.id, expiresAt: { gt: new Date() } },
+    where: { tokenHash: digest(token), userId: session.user.id, expiresAt: { gt: new Date() }, lastSeenAt: { gt: new Date(Date.now() - IDLE_SESSION_MS) }, user: { active: true } },
     data: { membershipId, branchId },
   });
   return result.count === 1;

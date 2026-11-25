@@ -59,6 +59,7 @@ model User {
   updatedAt    DateTime     @updatedAt
   memberships  Membership[]
   sessions     Session[]
+  securityEvents SecurityEvent[]
 }
 
 model Role {
@@ -138,11 +139,13 @@ model Session {
   membershipId String?  @db.Uuid
   branchId     String?  @db.Uuid
   expiresAt    DateTime
+  lastSeenAt   DateTime @default(now())
   createdAt    DateTime @default(now())
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
+  @@index([lastSeenAt])
 }
 
 model LoginAttempt {
@@ -604,4 +607,22 @@ model AuditEvent {
 
   @@index([organizationId, branchId, createdAt, id], map: "AuditEvent_branch_date_idx")
   @@index([organizationId, createdAt, id], map: "AuditEvent_org_date_idx")
+}
+
+enum SecurityEventKind {
+  LOGIN_SUCCEEDED
+  LOGIN_REJECTED
+  SESSION_REVOKED
+  PASSWORD_CHANGED
+  PASSWORD_CHANGE_REJECTED
+}
+
+model SecurityEvent {
+  id        String @id @default(uuid()) @db.Uuid
+  userId    String @db.Uuid
+  kind      SecurityEventKind
+  createdAt DateTime @default(now())
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt, id])
 }

@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/prisma";
-import { authenticate, createSession, revokeSession, selectContext, SESSION_COOKIE, SESSION_SECONDS } from "./service";
+import { signIn, revokeSession, selectContext, SESSION_COOKIE, SESSION_SECONDS } from "./service";
 
 export async function login(formData: FormData): Promise<void> {
   const email = formData.get("email");
@@ -11,13 +11,12 @@ export async function login(formData: FormData): Promise<void> {
   if (typeof email !== "string" || typeof password !== "string") redirect("/login?error=credentials");
 
   const db = getPrisma();
-  const userId = await authenticate(db, email, password);
-  if (!userId) redirect("/login?error=credentials");
+  const session = await signIn(db, email, password);
+  if (!session) redirect("/login?error=credentials");
 
   const store = await cookies();
   const previous = store.get(SESSION_COOKIE)?.value;
   if (previous) await revokeSession(db, previous);
-  const session = await createSession(db, userId);
   store.set(SESSION_COOKIE, session.token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
