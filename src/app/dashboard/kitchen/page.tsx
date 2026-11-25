@@ -37,7 +37,7 @@ export default async function KitchenPage({ searchParams }: { searchParams: Prom
                 <p className="mt-1 text-xs text-muted">#{order.id.slice(0, 8).toUpperCase()}</p>
                 <ul className="my-3 space-y-2 border-y border-line py-3">{order.lines.map((line) => <li key={line.id} className="flex gap-2 text-sm"><span className="font-bold tabular-nums">{line.quantity}×</span><span>{line.productName}{line.variantName ? ` · ${line.variantName}` : ""}</span></li>)}</ul>
                 {order.note && <p className="mb-3 rounded-lg bg-warning-soft p-2 text-xs text-warning">{order.note}</p>}
-                <form action={moveKitchenOrder}><input type="hidden" name="scope" value={scope} /><input type="hidden" name="id" value={order.id} /><input type="hidden" name="expected" value={stage.status} /><button type="submit" className="min-h-11 w-full rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-hover">{stage.action}</button></form>
+                <form action={moveKitchenOrder}><input type="hidden" name="scope" value={scope} /><input type="hidden" name="id" value={order.id} /><input type="hidden" name="expected" value={stage.status} /><button type="submit" className="min-h-11 w-full rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-hover">{stage.status === "READY" && order.channel === "DELIVERY" ? "Entregar a despacho" : stage.action}</button></form>
               </article>)}
               {!current.length && <p className="rounded-lg border border-dashed border-line p-4 text-center text-xs text-muted">Sin comandas</p>}
             </div>

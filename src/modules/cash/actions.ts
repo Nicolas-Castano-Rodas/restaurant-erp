@@ -26,6 +26,6 @@ export async function manageCash(form: FormData) {
   } catch (error) {
     message = error instanceof CashError ? error.message : "No se pudo completar la operación. Actualiza antes de reintentar.";
   }
-  for (const path of ["/dashboard/cash", "/dashboard/tables", "/dashboard/pos", "/dashboard/orders", "/dashboard/kitchen", "/dashboard/customers"]) revalidatePath(path);
+  for (const path of ["/dashboard/cash", "/dashboard/tables", "/dashboard/pos", "/dashboard/orders", "/dashboard/kitchen", "/dashboard/customers", "/dashboard/deliveries"]) revalidatePath(path);
   redirect(message ? `/dashboard/cash?error=${encodeURIComponent(message)}` : "/dashboard/cash?saved=1");
 }

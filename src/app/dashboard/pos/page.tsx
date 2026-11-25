@@ -25,6 +25,7 @@ export default async function PosPage({ searchParams }: { searchParams: Promise<
     <ModulePage title="Punto de venta" subtitle={`${context.organization.name} · ${context.branch.name}`}>
       <div className="mb-3 flex flex-wrap gap-4 text-sm font-semibold text-brand">
         <Link href="/dashboard/orders" className="hover:underline">Consultar pedidos →</Link>
+        <Link href="/dashboard/deliveries" className="hover:underline">Ver domicilios →</Link>
         <Link href="/dashboard/tables" className="hover:underline">Ver mesas →</Link>
       </div>
       <PosTerminal key={`${context.organization.id}:${context.branch.id}:${table ?? ""}:${customer ?? ""}`} products={products} customers={customers} initialCustomerId={customers.find((entry) => entry.id === customer)?.id ?? ""} tables={tables} initialTableId={tables.find((entry) => entry.id === table && entry.active && !entry.occupied)?.id ?? ""} currency={context.organization.currency} scope={`${context.organization.id}:${context.branch.id}`} initialRequestId={randomUUID()} />

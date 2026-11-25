@@ -18,6 +18,7 @@ export async function submitOrder(scope: string, payload: unknown): Promise<{ id
     revalidatePath("/dashboard/kitchen");
     revalidatePath("/dashboard/cash");
     revalidatePath("/dashboard/customers");
+    revalidatePath("/dashboard/deliveries");
     return { id, nextRequestId: randomUUID() };
   } catch (error) {
     return { error: error instanceof OrderError ? error.message : "No se pudo registrar el pedido. Intenta nuevamente." };

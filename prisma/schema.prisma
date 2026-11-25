@@ -42,6 +42,7 @@ model Branch {
   inventoryBalances InventoryBalance[]
   purchases Purchase[]
   customers Customer[]
+  couriers Courier[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, code])
@@ -257,6 +258,7 @@ model Order {
   subtotal       Decimal @db.Decimal(16, 2)
   discount       Decimal @default(0) @db.Decimal(16, 2)
   tax            Decimal @default(0) @db.Decimal(16, 2)
+  deliveryFee    Decimal @default(0) @db.Decimal(16, 2)
   total          Decimal @db.Decimal(16, 2)
   note           String?
   createdAt      DateTime @default(now())
@@ -268,6 +270,7 @@ model Order {
   lines          OrderLine[]
   stockMovements StockMovement[]
   payment        Payment?
+  delivery       Delivery?
   closedBy       Membership? @relation("OrderClosedBy", fields: [organizationId, closedById], references: [organizationId, id], onDelete: Restrict)
 
   @@unique([organizationId, id])
@@ -533,4 +536,50 @@ model Customer {
   @@unique([organizationId, branchId, id])
   @@index([organizationId, branchId, name])
   @@index([organizationId, branchId, phone])
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  DISPATCHED
+  DELIVERED
+}
+
+model Courier {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  branchId       String @db.Uuid
+  name           String
+  phone          String?
+  active         Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  branch         Branch @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
+  deliveries     Delivery[]
+
+  @@unique([organizationId, branchId, id])
+  @@index([organizationId, branchId, active])
+}
+
+model Delivery {
+  id             String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  branchId       String @db.Uuid
+  orderId        String @db.Uuid
+  courierId      String? @db.Uuid
+  recipient      String
+  phone          String
+  address        String
+  instructions   String?
+  status         DeliveryStatus @default(PENDING)
+  assignedAt     DateTime?
+  dispatchedAt   DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  order          Order @relation(fields: [organizationId, branchId, orderId], references: [organizationId, branchId, id], onDelete: Restrict)
+  courier        Courier? @relation(fields: [organizationId, branchId, courierId], references: [organizationId, branchId, id], onDelete: Restrict)
+
+  @@unique([organizationId, branchId, orderId])
+  @@index([organizationId, branchId, status, createdAt])
 }

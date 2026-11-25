@@ -40,7 +40,7 @@ export function payOrder(db: PrismaClient, scope: Scope, orderId: string, method
   const { organizationId, branchId, membershipId } = scope;
   return db.$transaction(async (tx) => {
     const currency = await authorize(tx, scope);
-    const order = await tx.order.findFirst({ where: { id: orderId, organizationId, branchId }, include: { payment: true } });
+    const order = await tx.order.findFirst({ where: { id: orderId, organizationId, branchId }, include: { payment: true, delivery: true } });
     if (!order) throw new CashError("Pedido no encontrado.");
     if (order.payment) {
       const received = method === "CASH" ? fromMinor(amount(receivedInput)) : order.total.toFixed(2);
@@ -48,6 +48,7 @@ export function payOrder(db: PrismaClient, scope: Scope, orderId: string, method
       return order.payment;
     }
     if (order.status !== "OPEN" || order.kitchenStatus !== "SERVED") throw new CashError("Entrega el pedido desde cocina antes de cobrarlo.");
+    if (order.delivery && order.delivery.status !== "DELIVERED") throw new CashError("Confirma la entrega del domicilio antes de cobrarlo.");
     const shift = await tx.cashShift.findFirst({ where: { organizationId, branchId, status: "OPEN" } });
     if (!shift) throw new CashError("Abre un turno de caja antes de cobrar.");
     if (shift.currency !== currency || order.currency !== currency) throw new CashError("La moneda del pedido no coincide con la caja.");
@@ -90,7 +91,7 @@ export async function cashOverview(db: PrismaClient, organizationId: string, bra
   const where = { organizationId, branchId };
   const [shift, pending, history] = await Promise.all([
     db.cashShift.findFirst({ where: { ...where, status: "OPEN" }, include: { payments: { select: { method: true, amount: true } } } }),
-    db.order.findMany({ where: { ...where, status: "OPEN" }, orderBy: { createdAt: "asc" }, select: { id: true, tableName: true, channel: true, kitchenStatus: true, total: true, currency: true } }),
+    db.order.findMany({ where: { ...where, status: "OPEN" }, orderBy: { createdAt: "asc" }, select: { id: true, tableName: true, channel: true, kitchenStatus: true, delivery: { select: { status: true } }, total: true, currency: true } }),
     db.cashShift.findMany({ where: { ...where, status: "CLOSED" }, orderBy: { closedAt: "desc" }, take: 10 }),
   ]);
   return { shift, pending, history };

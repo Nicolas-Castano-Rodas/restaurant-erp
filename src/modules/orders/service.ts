@@ -4,8 +4,9 @@ import { fromMinor, toMinor } from "./money";
 
 type Scope = { organizationId: string; branchId: string; membershipId: string };
 type Channel = "DINE_IN" | "TAKEAWAY" | "DELIVERY";
+type DeliveryInput = { recipient: string; phone: string; address: string; instructions: string; fee: string };
 type Item = { productId: string; variantId: string | null; quantity: number };
-export type OrderInput = { requestId: string; channel: Channel; tableId: string | null; note: string; customerId?: string | null; items: Item[] };
+export type OrderInput = { requestId: string; channel: Channel; tableId: string | null; note: string; customerId?: string | null; delivery?: DeliveryInput; items: Item[] };
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class OrderError extends Error {}
@@ -13,7 +14,7 @@ export class OrderError extends Error {}
 export function parseOrderInput(raw: unknown): OrderInput {
   if (!raw || typeof raw !== "object") throw new OrderError("Pedido inválido.");
   const data = raw as Record<string, unknown>;
-  const { requestId, channel, tableId, note, items, customerId } = data;
+  const { requestId, channel, tableId, note, items, customerId, delivery } = data;
   if (typeof requestId !== "string" || !uuid.test(requestId) ||
     (channel !== "DINE_IN" && channel !== "TAKEAWAY" && channel !== "DELIVERY") ||
     (channel === "DINE_IN" ? typeof tableId !== "string" || !uuid.test(tableId) : tableId !== null) ||
@@ -21,6 +22,13 @@ export function parseOrderInput(raw: unknown): OrderInput {
     typeof note !== "string" || note.length > 500 || !Array.isArray(items) || !items.length || items.length > 100) {
     throw new OrderError("Revisa los datos del pedido.");
   }
+  let deliveryData: DeliveryInput | undefined;
+  if (channel === "DELIVERY") {
+    if (!delivery || typeof delivery !== "object") throw new OrderError("Completa los datos del domicilio.");
+    const { recipient, phone, address, instructions, fee } = delivery as Record<string, unknown>;
+    if (typeof recipient !== "string" || !recipient.trim() || recipient.length > 120 || typeof phone !== "string" || phone.trim().length < 5 || phone.length > 40 || typeof address !== "string" || address.trim().length < 5 || address.length > 250 || typeof instructions !== "string" || instructions.length > 500 || typeof fee !== "string" || !/^\d{1,10}(\.\d{1,2})?$/.test(fee)) throw new OrderError("Revisa destinatario, teléfono, dirección y costo del domicilio.");
+    deliveryData = { recipient: recipient.trim(), phone: phone.trim(), address: address.trim(), instructions: instructions.trim(), fee: fromMinor(toMinor(fee)) };
+  } else if (delivery != null) throw new OrderError("Los datos de entrega solo aplican a domicilios.");
   const seen = new Set<string>();
   const validated = items.map((rawItem: unknown): Item => {
     if (!rawItem || typeof rawItem !== "object") throw new OrderError("Producto inválido.");
@@ -33,7 +41,7 @@ export function parseOrderInput(raw: unknown): OrderInput {
     return { productId, variantId, quantity };
   });
   validated.sort((a, b) => `${a.productId}:${a.variantId ?? ""}`.localeCompare(`${b.productId}:${b.variantId ?? ""}`));
-  return { requestId, channel, tableId: channel === "DINE_IN" ? tableId as string : null, note: note.trim(), items: validated, ...(typeof customerId === "string" ? { customerId } : {}) };
+  return { requestId, channel, tableId: channel === "DINE_IN" ? tableId as string : null, note: note.trim(), items: validated, ...(typeof customerId === "string" ? { customerId } : {}), ...(deliveryData ? { delivery: deliveryData } : {}) };
 }
 
 export async function createOrder(db: PrismaClient, scope: Scope, input: OrderInput) {
@@ -80,13 +88,15 @@ export async function createOrder(db: PrismaClient, scope: Scope, input: OrderIn
         subtotal += lineTotal;
         return { productId: product.id, variantId: variant?.id ?? null, productName: product.name, variantName: variant?.name ?? null, quantity: item.quantity, unitPrice: fromMinor(unitPrice), lineTotal: fromMinor(lineTotal) };
       });
-      if (subtotal > 9999999999999999n) throw new OrderError("El importe supera el máximo permitido.");
-      const total = fromMinor(subtotal);
+      const deliveryFee = data.delivery ? toMinor(data.delivery.fee) : 0n;
+      if (subtotal + deliveryFee > 9999999999999999n) throw new OrderError("El importe supera el máximo permitido.");
+      const total = fromMinor(subtotal + deliveryFee);
       const order = await tx.order.create({ data: {
         ...key, membershipId, requestHash, channel: data.channel, tableId: table?.id ?? null, tableName: table?.name ?? null,
-        customerId: data.customerId ?? null, currency: membership.organization.currency, subtotal: total, total, note: data.note || null,
+        customerId: data.customerId ?? null, currency: membership.organization.currency, subtotal: fromMinor(subtotal), deliveryFee: fromMinor(deliveryFee), total, note: data.note || null,
       }, select: { id: true } });
       await tx.orderLine.createMany({ data: lines.map((line) => ({ ...line, organizationId, orderId: order.id })) });
+      if (data.delivery) await tx.delivery.create({ data: { organizationId, branchId, orderId: order.id, recipient: data.delivery.recipient, phone: data.delivery.phone, address: data.delivery.address, instructions: data.delivery.instructions || null } });
       return order.id;
     }, { isolationLevel: "Serializable" });
   } catch (error) {
@@ -108,6 +118,6 @@ export function listOrders(db: PrismaClient, organizationId: string, branchId: s
     where: { organizationId, branchId },
     orderBy: { createdAt: "desc" },
     take: 50,
-    select: { id: true, channel: true, status: true, kitchenStatus: true, tableName: true, customer: { select: { name: true } }, total: true, currency: true, createdAt: true, note: true, cancelReason: true, closedAt: true, payment: { select: { method: true, amount: true, received: true, change: true, createdAt: true } }, lines: { select: { id: true, productName: true, variantName: true, quantity: true, lineTotal: true } } },
+    select: { id: true, channel: true, status: true, kitchenStatus: true, tableName: true, customer: { select: { name: true } }, deliveryFee: true, delivery: { select: { status: true } }, total: true, currency: true, createdAt: true, note: true, cancelReason: true, closedAt: true, payment: { select: { method: true, amount: true, received: true, change: true, createdAt: true } }, lines: { select: { id: true, productName: true, variantName: true, quantity: true, lineTotal: true } } },
   });
 }

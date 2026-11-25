@@ -24,6 +24,14 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
   const [note, setNote] = useState("");
   const [customerId, setCustomerId] = useState(initialCustomerId);
   const [customerSearch, setCustomerSearch] = useState("");
+  const [recipient, setRecipient] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [fee, setFee] = useState("0");
+  const validFee = /^\d{1,10}(\.\d{1,2})?$/.test(fee);
+  const deliveryValid = channel !== "DELIVERY" || (recipient.trim().length > 0 && phone.trim().length >= 5 && address.trim().length >= 5 && validFee);
+  const deliveryFee = channel === "DELIVERY" && validFee ? toMinor(fee) : 0n;
   const matchingCustomers = customers.filter((customer) => customer.id === customerId || `${customer.name} ${customer.phone ?? ""}`.toLowerCase().includes(customerSearch.trim().toLowerCase()));
   const [requestId, setRequestId] = useState(initialRequestId);
   const [result, setResult] = useState<{ id: string; nextRequestId: string } | { error: string } | null>(null);
@@ -43,17 +51,18 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
     setResult(null);
   }
   function save() {
-    if (!cart.length || (channel === "DINE_IN" && !selectedTable) || pending) return;
+    if (!cart.length || (channel === "DINE_IN" && !selectedTable) || !deliveryValid || pending) return;
     setResult(null);
     startTransition(async () => {
       try {
-        const response = await submitOrder(scope, { requestId, channel, tableId: channel === "DINE_IN" ? tableId : null, note, customerId: customerId || null, items: cart.map(({ productId, variantId, quantity }) => ({ productId, variantId, quantity })) });
+        const response = await submitOrder(scope, { requestId, channel, tableId: channel === "DINE_IN" ? tableId : null, note, customerId: customerId || null, ...(channel === "DELIVERY" ? { delivery: { recipient, phone, address, instructions, fee } } : {}), items: cart.map(({ productId, variantId, quantity }) => ({ productId, variantId, quantity })) });
         setResult(response);
         if ("id" in response) {
           setCart([]);
           setNote("");
           setCustomerId("");
           setCustomerSearch("");
+          setRecipient(""); setPhone(""); setAddress(""); setInstructions(""); setFee("0");
           setTableId("");
           setRequestId(response.nextRequestId);
           router.refresh();
@@ -114,15 +123,25 @@ export function PosTerminal({ products, tables, currency, scope, initialRequestI
             <label className="block text-xs text-muted">Cliente del pedido<select value={customerId} onChange={(event) => setCustomerId(event.target.value)} className="mt-2 w-full rounded-lg border border-line bg-surface px-2 py-3 text-sm"><option value="">Consumidor final / sin registro</option>{matchingCustomers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name}{customer.phone ? ` · ${customer.phone}` : ""}</option>)}</select></label>
             {customerSearch && !matchingCustomers.length && <p className="text-xs text-muted">Sin coincidencias. Busca en el módulo Clientes.</p>}
           </div>
+          {channel === "DELIVERY" && <div className="space-y-3 rounded-xl border border-line bg-canvas p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">Datos de entrega</h3><button type="button" disabled={!customerId} onClick={() => { const selected = customers.find((entry) => entry.id === customerId); if (selected) { setRecipient(selected.name); setPhone(selected.phone ?? ""); } }} className="text-xs font-semibold text-brand underline disabled:opacity-50">Usar datos del cliente</button></div>
+            <label className="block text-xs text-muted">Destinatario<input value={recipient} onChange={(event) => setRecipient(event.target.value)} maxLength={120} className="mt-2 w-full rounded-lg border border-line bg-surface p-2 text-sm" /></label>
+            <label className="block text-xs text-muted">Teléfono<input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={40} className="mt-2 w-full rounded-lg border border-line bg-surface p-2 text-sm" /></label>
+            <label className="block text-xs text-muted">Dirección completa y barrio<input value={address} onChange={(event) => setAddress(event.target.value)} maxLength={250} className="mt-2 w-full rounded-lg border border-line bg-surface p-2 text-sm" /></label>
+            <label className="block text-xs text-muted">Indicaciones de entrega (opcional)<textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} maxLength={500} rows={2} className="mt-2 w-full rounded-lg border border-line bg-surface p-2 text-sm" /></label>
+            <label className="block text-xs text-muted">Costo de envío ({currency})<input type="number" min="0" step="0.01" max="9999999999.99" value={fee} onChange={(event) => setFee(event.target.value)} className="mt-2 w-full rounded-lg border border-line bg-surface p-2 text-sm" /></label>
+            {!deliveryValid && <p className="text-xs text-warning">Completa los datos de entrega y un costo válido.</p>}
+          </div>}
           <div className="divide-y divide-line border-y border-line">
             {cart.map((line) => <div key={line.key} className="py-3"><p className="text-sm font-semibold">{line.name}</p><div className="mt-2 flex items-center justify-between gap-2"><div className="flex items-center gap-2"><button type="button" aria-label={`Reducir ${line.name}`} onClick={() => changeQuantity(line.key, -1)} className="size-11 rounded-lg border border-line">−</button><span className="min-w-5 text-center text-sm tabular-nums">{line.quantity}</span><button type="button" aria-label={`Aumentar ${line.name}`} onClick={() => changeQuantity(line.key, 1)} className="size-11 rounded-lg border border-line">+</button></div><span className="text-sm font-semibold tabular-nums">{money(toMinor(line.price) * BigInt(line.quantity))}</span></div></div>)}
             {!cart.length && <p className="py-5 text-sm text-muted">Agrega productos para comenzar.</p>}
           </div>
           <label className="block text-xs text-muted">Observaciones<textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={2} className="mt-2 w-full rounded-lg border border-line p-2 text-sm" /></label>
         </fieldset>
-        <div className="mt-4 flex items-center justify-between border-t border-line pt-4"><span className="font-semibold">Total estimado</span><span className="text-xl font-bold tabular-nums">{money(total)}</span></div>
+        {channel === "DELIVERY" && <div className="mt-3 space-y-1 text-sm text-muted"><p className="flex justify-between"><span>Productos</span><span>{money(total)}</span></p><p className="flex justify-between"><span>Envío</span><span>{money(deliveryFee)}</span></p></div>}
+        <div className="mt-4 flex items-center justify-between border-t border-line pt-4"><span className="font-semibold">Total estimado</span><span className="text-xl font-bold tabular-nums">{money(total + deliveryFee)}</span></div>
         <p className="mt-2 text-xs text-muted">El servidor valida precios y disponibilidad. Sin impuestos ni descuentos adicionales en esta versión.</p>
-        <button type="button" onClick={save} disabled={pending || !cart.length || (channel === "DINE_IN" && !selectedTable)} className="mt-4 min-h-12 w-full rounded-lg bg-brand px-4 py-3 font-semibold text-white hover:bg-brand-hover disabled:opacity-50">{pending ? "Registrando..." : "Registrar pedido"}</button>
+        <button type="button" onClick={save} disabled={pending || !cart.length || !deliveryValid || (channel === "DINE_IN" && !selectedTable)} className="mt-4 min-h-12 w-full rounded-lg bg-brand px-4 py-3 font-semibold text-white hover:bg-brand-hover disabled:opacity-50">{pending ? "Registrando..." : "Registrar pedido"}</button>
         {result && ("error" in result ? <p role="alert" className="mt-3 rounded-lg bg-danger-soft p-3 text-sm text-danger">{result.error}</p> : <output className="mt-3 block rounded-lg bg-success-soft p-3 text-sm text-success">Pedido registrado. <Link href="/dashboard/orders" className="font-semibold underline">Consultar pedidos</Link></output>)}
       </section>
     </div>

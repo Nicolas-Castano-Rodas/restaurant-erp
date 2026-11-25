@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 import { getPrisma } from "../../src/lib/prisma";
 import { createOrder, parseOrderInput } from "../../src/modules/orders/service";
 import { saveCustomer, customerHistory, listPosCustomers } from "../../src/modules/customers/service";
+import { saveCourier, assignCourier, advanceDelivery } from "../../src/modules/deliveries/service";
+import { payOrder, openShift } from "../../src/modules/cash/service";
 import { listTables } from "../../src/modules/catalog/service";
 
 async function main() {
@@ -50,6 +52,29 @@ async function main() {
     await saveCustomer(db, scope, { id: customer.id, name: "Cliente de prueba", phone: "", email: "", active: true });
     const anonymous = await createOrder(db, scope, { ...input, customerId: null, requestId: randomUUID(), channel: "TAKEAWAY", tableId: null });
     assert.equal((await db.order.findUniqueOrThrow({ where: { id: anonymous } })).customerId, null);
+    const deliveryInput = { ...input, requestId: randomUUID(), channel: "DELIVERY" as const, tableId: null, delivery: { recipient: "Test", phone: "3000000000", address: "Dirección ficticia", instructions: "", fee: "3500.50" } };
+    const deliveryOrder = await createOrder(db, scope, deliveryInput);
+    assert.equal(await createOrder(db, scope, deliveryInput), deliveryOrder);
+    const deliveredOrder = await db.order.findUniqueOrThrow({ where: { id: deliveryOrder }, include: { delivery: true } });
+    assert.equal(deliveredOrder.total.toFixed(2), "57501.25");
+    assert.equal(deliveredOrder.deliveryFee.toFixed(2), "3500.50");
+    assert.ok(deliveredOrder.delivery);
+    const deliveryId = deliveredOrder.delivery.id;
+    const courier = await saveCourier(db, scope, { name: "Test courier", phone: "", active: true });
+    const otherCourier = await db.courier.create({ data: { organizationId: b.id, branchId: otherBranch.id, name: "Other" } });
+    await assert.rejects(assignCourier(db, scope, deliveryId, otherCourier.id), /no disponible/);
+    await assignCourier(db, scope, deliveryId, courier.id);
+    await assert.rejects(advanceDelivery(db, scope, deliveryId, "DELIVERED"), /estado/);
+    await assert.rejects(advanceDelivery(db, scope, deliveryId, "DISPATCHED"), /cocina/);
+    await db.order.update({ where: { id: deliveryOrder }, data: { kitchenStatus: "SERVED" } });
+    await db.permission.upsert({ where: { code: "cash.manage" }, create: { code: "cash.manage", description: "Cash" }, update: {} });
+    await db.rolePermission.create({ data: { roleId: role.id, permissionCode: "cash.manage" } });
+    await openShift(db, scope, "0");
+    await assert.rejects(payOrder(db, scope, deliveryOrder, "CASH", "60000"), /domicilio/);
+    await advanceDelivery(db, scope, deliveryId, "DISPATCHED");
+    await advanceDelivery(db, scope, deliveryId, "DELIVERED");
+    const payment = await payOrder(db, scope, deliveryOrder, "CASH", "60000");
+    assert.equal(payment.amount.toFixed(2), "57501.25");
     await db.product.update({ where: { id: product.id }, data: { name: "Changed", available: false } });
     assert.equal((await db.orderLine.findFirstOrThrow({ where: { orderId: id } })).productName, "Arroz");
     await assert.rejects(createOrder(db, scope, { ...input, requestId: randomUUID(), channel: "TAKEAWAY", tableId: null }), /ya no está disponible/);
@@ -58,6 +83,10 @@ async function main() {
   } finally {
     try {
       const where = { organizationId: { in: ids } };
+      await db.payment.deleteMany({ where });
+      await db.cashShift.deleteMany({ where });
+      await db.delivery.deleteMany({ where });
+      await db.courier.deleteMany({ where });
       await db.orderLine.deleteMany({ where });
       await db.order.deleteMany({ where });
       await db.customer.deleteMany({ where });

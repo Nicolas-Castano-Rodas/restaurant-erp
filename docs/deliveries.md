@@ -1,0 +1,7 @@
+# Domicilios
+
+Ruta /dashboard/deliveries, permiso orders.manage. Domiciliarios por sucursal. Al crear un pedido DELIVERY desde POS se exigen destinatario, teléfono, dirección y costo de envío no negativo, con indicaciones opcionales y cliente registrado opcional. El operador introduce la tarifa manualmente; el servidor valida su formato y suma el costo a los importes de catálogo. Los datos de entrega se guardan por pedido y no se modifican al editar un cliente. No existe aún una libreta de direcciones.
+
+Estados PENDING -> ASSIGNED -> DISPATCHED -> DELIVERED. Se permite reasignar antes del despacho. Para despachar se requiere cocina SERVED (entrega a despacho) y domiciliario activo. Caja exige entrega confirmada antes de cobrar pedidos con registro de domicilio. Los pedidos anteriores sin registro mantienen el flujo anterior, con aviso en el tablero. Cancelaciones se realizan desde caja y se muestran como cerradas sin falsear el último estado de reparto. Las operaciones usan transacciones serializables y alcance de sucursal. Una persona puede gestionar varios pedidos. No es una aplicación para domiciliarios ni rastreo GPS, no estima rutas, no envía mensajes ni cobra automáticamente. No permite anticipos ni pagos parciales, ni gestiona liquidaciones al domiciliario. Los datos personales se limitan a la operación; no usar datos reales en demostraciones.
+
+Aplicar npm run db:deploy. orders:test cubre tarifa, idempotencia, asignación, despacho, entrega y bloqueo de cobro.

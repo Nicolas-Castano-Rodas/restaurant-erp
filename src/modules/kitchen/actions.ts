@@ -24,5 +24,7 @@ export async function moveKitchenOrder(form: FormData) {
   revalidatePath("/dashboard/kitchen");
   revalidatePath("/dashboard/orders");
   revalidatePath("/dashboard/inventory");
+  revalidatePath("/dashboard/deliveries");
+  revalidatePath("/dashboard/cash");
   redirect(changed ? "/dashboard/kitchen?saved=1" : `/dashboard/kitchen?error=${encodeURIComponent(message || "La comanda cambió. Actualiza la página.")}`);
 }
