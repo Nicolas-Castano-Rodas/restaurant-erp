@@ -9,6 +9,8 @@ export async function recordAudit(tx: Prisma.TransactionClient, scope: Scope, ac
 }
 
 export const auditLabels: Record<string, string> = {
+  CATEGORY_CREATED: "Categoría creada", CATEGORY_UPDATED: "Categoría actualizada", PRODUCT_CREATED: "Producto creado", PRODUCT_UPDATED: "Producto actualizado",
+  VARIANT_CREATED: "Variante creada", VARIANT_UPDATED: "Variante actualizada", TABLE_CREATED: "Mesa creada", TABLE_UPDATED: "Mesa actualizada",
   ORDER_CREATED: "Pedido registrado", ORDER_PAID: "Pedido cobrado", ORDER_CANCELLED: "Pedido cancelado",
   KITCHEN_TRANSITION: "Estado de cocina", SHIFT_OPENED: "Apertura de caja", SHIFT_CLOSED: "Cierre de caja",
   INGREDIENT_CREATED: "Ingrediente registrado", INVENTORY_CONFIGURED: "Stock mínimo y costo configurados", STOCK_MOVED: "Movimiento manual",
