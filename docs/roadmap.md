@@ -10,8 +10,8 @@
 | 5 | Cocina, pagos y caja | Cocina, caja y pagos iniciales validados; devoluciones pendientes |
 | 6 | Inventario, recetas y compras | Inventario y recetas validados; compras y recepción completas validadas; devoluciones y compras parciales pendientes |
 | 7 | Clientes, domicilios y analítica | Clientes, domicilios y analítica validados; exportaciones XLSX/PDF pasan integración; corrección de lint publicada |
-| 8 | Auditoría, pruebas, accesibilidad y rendimiento | Integración, contraste, lint, tipos, build, HTTP y 2 pruebas Chromium superados en e7d786d; puerta de vulnerabilidades altas y nuevas pruebas de recuperación/contenedor pendientes |
-| 9 | Despliegue, demo y materiales de lanzamiento | Configuración, demo local y materiales preparados; validación de contenedor y recuperación en CI añadida; seguridad de dependencias, despliegue real, capturas y publicación pendientes |
+| 8 | Auditoría, pruebas, accesibilidad y rendimiento | Integración, contraste, lint, tipos, build, HTTP y 2 pruebas Chromium superados en e7d786d; recuperación y contenedor superados; candidato d028957 validado y auditoría de main ab2cecc con 0 vulnerabilidades; CI integral del nuevo commit pendiente |
+| 9 | Despliegue, demo y materiales de lanzamiento | Configuración, demo local y materiales preparados; contenedor y recuperación sintética validados; despliegue real, capturas y publicación pendientes |
 
 ## Definición de terminado
 Código revisado, lint y tipos correctos, pruebas aplicables superadas, documentación actualizada, sin secretos ni datos personales reales. Las funcionalidades se anuncian como disponibles únicamente después de verificar su funcionamiento.

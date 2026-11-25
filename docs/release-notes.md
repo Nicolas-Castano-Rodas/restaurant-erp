@@ -17,3 +17,6 @@ No incluye facturación electrónica, procesamiento bancario, reembolsos, GPS en
 
 ## Validación de referencia
 [e7d786d, CI 45688669694](https://github.com/Nicolas-Castano-Rodas/restaurant-erp/actions/runs/45688669694): instalación bloqueada por lockfile, integración, accesibilidad parcial, lint, tipos, build, HTTP y navegador superados. El informe informativo detectó vulnerabilidades altas; el candidato no está aprobado para publicación comercial. Los controles adicionales de dependencias, imagen y restauración se verifican en nuevas ejecuciones.
+
+## Actualización de dependencias validada
+La rama candidata d028957 (CI 45690165319) pasó todas las pruebas, contenedor y restauración y npm audit informó 0 vulnerabilidades conocidas. Los manifiestos actualizados se incorporaron a main en ab2cecc: Prisma 7.10.1, effect 3.22.5, uuid 11.1.1, deepmerge-ts 8.0.2 y mysql2 3.24.4. El job Release security gate de CI 45693737644 pasó con 0 vulnerabilidades; el resto de su ejecución estaba en curso al registrar esta actualización. Mantener la auditoría bloqueante y revisar los overrides cuando sus consumidores actualicen sus rangos. El resultado no certifica la seguridad completa ni garantiza ausencia de hallazgos futuros.

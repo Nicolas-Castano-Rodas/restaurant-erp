@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // npm scripts run in this single-package project root, including Docker and Vercel.
+  turbopack: { root: process.cwd() },
   serverExternalPackages: ["exceljs", "pdf-lib"],
   async headers() {
     const security = [

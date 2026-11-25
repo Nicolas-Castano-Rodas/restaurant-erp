@@ -186,8 +186,11 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: user reduced-motion preferences must override component animation styles. */
     scroll-behavior: auto !important;
+    /* biome-ignore lint/complexity/noImportantStyles: user reduced-motion preferences must override component animation styles. */
     animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: user reduced-motion preferences must override component animation styles. */
     transition-duration: 0.01ms !important;
   }
 }

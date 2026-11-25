@@ -52,7 +52,7 @@ npm run typecheck
 npm run build
 ```
 
-Pruebas de integración y E2E únicamente sobre bases desechables. CI comprueba migraciones, servicios, HTTP y navegador. El lockfile está versionado y npm ci pasó en CI. La validación funcional de e7d786d pasó 11 suites de integración, 21 comprobaciones de contraste y 2 pruebas Chromium. El informe de dependencias todavía contiene vulnerabilidades altas; se añade una puerta de seguridad bloqueante, además de pruebas de contenedor y restauración sintética. Consultar guías de [pruebas](docs/testing.md), [seguridad](docs/security.md), [rendimiento](docs/performance.md) y [despliegue](docs/deployment.md).
+Pruebas de integración y E2E únicamente sobre bases desechables. CI comprueba migraciones, servicios, HTTP y navegador. El lockfile está versionado y npm ci pasó en CI. La validación funcional de e7d786d pasó 11 suites de integración, 21 comprobaciones de contraste y 2 pruebas Chromium. El candidato d028957 superó auditoría (0 vulnerabilidades conocidas), navegador, contenedor y restauración sintética. Los manifiestos se incorporaron en ab2cecc y su auditoría obligatoria también pasó. Consultar CI del commit actual para la validación integral. Consultar guías de [pruebas](docs/testing.md), [seguridad](docs/security.md), [rendimiento](docs/performance.md) y [despliegue](docs/deployment.md).
 
 - /api/health: disponibilidad del proceso.
 - /api/ready: conexión simple a PostgreSQL.
