@@ -95,6 +95,10 @@ jobs:
         env:
           RUN_DB_TESTS: "true"
         run: npm run purchases:test
+      - name: Analytics integration test
+        env:
+          RUN_DB_TESTS: "true"
+        run: npm run analytics:test
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
@@ -119,3 +123,4 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/purchases)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/customers)" = "307"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/deliveries)" = "307"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/dashboard/analytics)" = "307"

@@ -2,7 +2,7 @@
 
 **Plataforma de gestión gastronómica multiempresa y multisucursal | Multi-tenant restaurant management platform**
 
-> Estado: base de aplicación, identidad multiempresa y acceso inicial publicados; autenticación inicial validada; catálogo y mesas validados; POS y cocina iniciales validados; caja inicial validada; inventario manual validado; recetas y consumo automático validados; compras y clientes validados; domicilios publicados, validación pendiente. Las funcionalidades de negocio descritas son objetivos de desarrollo.
+> Estado: base de aplicación, identidad multiempresa y acceso inicial publicados; autenticación inicial validada; catálogo y mesas validados; POS y cocina iniciales validados; caja inicial validada; inventario manual validado; recetas y consumo automático validados; compras y clientes validados; domicilios y analítica publicados, validación final pendiente. Las funcionalidades de negocio descritas son objetivos de desarrollo.
 
 ## Visión
 
@@ -75,6 +75,7 @@ El archivo package-lock.json debe generarse mediante npm y guardarse en Git ante
 - [Compras y proveedores](docs/purchases.md)
 - [Clientes](docs/customers.md)
 - [Domicilios](docs/deliveries.md)
+- [Analítica](docs/analytics.md)
 
 ## English overview
 

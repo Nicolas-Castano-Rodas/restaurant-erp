@@ -32,7 +32,8 @@
     "cash:test": "tsx tests/integration/cash.ts",
     "inventory:test": "tsx tests/integration/inventory.ts",
     "recipes:test": "tsx tests/integration/recipes.ts",
-    "purchases:test": "tsx tests/integration/purchases.ts"
+    "purchases:test": "tsx tests/integration/purchases.ts",
+    "analytics:test": "tsx tests/integration/analytics.ts"
   },
   "dependencies": {
     "next": "16.4.6",

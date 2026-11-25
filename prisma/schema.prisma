@@ -360,6 +360,7 @@ model Payment {
 
   @@unique([organizationId, branchId, orderId])
   @@index([organizationId, branchId, shiftId])
+  @@index([organizationId, branchId, createdAt], map: "Payment_branch_date_idx")
 }
 
 enum IngredientUnit {
