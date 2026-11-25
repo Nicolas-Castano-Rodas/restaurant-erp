@@ -78,7 +78,7 @@ export default function Home() {
               <a className="rounded-lg bg-brand px-6 py-4 font-semibold text-white transition-colors hover:bg-brand-hover" href="#modulos">
                 Explorar el sistema
               </a>
-              <span className="text-sm text-muted">Producto en desarrollo</span>
+              <span className="text-sm text-muted">En preparación para piloto</span>
             </div>
             <p className="mt-10 border-t border-line pt-5 text-sm font-semibold text-muted">
               Restaurantes · Cafeterías · Negocios gastronómicos
@@ -116,9 +116,9 @@ export default function Home() {
           </div>
         </section>
         <section className="border-t border-line py-16" id="modulos">
-          <p className="text-xs font-bold uppercase tracking-widest text-brand">Alcance previsto</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-brand">Módulos de gestión</p>
           <h2 className="mt-3 text-3xl font-bold">Un sistema. Toda la operación.</h2>
-          <p className="mt-3 max-w-2xl text-muted">Módulos diseñados alrededor de las necesidades de cada equipo.</p>
+          <p className="mt-3 max-w-2xl text-muted">Ventas, cocina, inventario y administración conectados según los permisos de cada equipo.</p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {modules.map((module) => (
               <article key={module.number} className="rounded-xl border border-line bg-surface p-6">
@@ -135,7 +135,7 @@ export default function Home() {
       </main>
       <footer className="bg-ink text-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-7 text-sm md:px-12">
-          <span className="font-semibold">Restaurant ERP</span>
+          <span className="font-semibold">Restaurant ERP · Todos los derechos reservados</span>
           <span className="text-slate-300">EL IMPERIO — Los Reyes del Software</span>
         </div>
       </footer>

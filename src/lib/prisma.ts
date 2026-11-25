@@ -13,7 +13,7 @@ export function getPrisma(): PrismaClient {
     }
 
     globalForPrisma.restaurantPrisma = new PrismaClient({
-      adapter: new PrismaPg({ connectionString }),
+      adapter: new PrismaPg({ connectionString, connectionTimeoutMillis: 5000 }),
     });
   }
 

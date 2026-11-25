@@ -2,103 +2,77 @@
 
 **Plataforma de gestión gastronómica multiempresa y multisucursal | Multi-tenant restaurant management platform**
 
-> Estado: base de aplicación, identidad multiempresa y acceso inicial publicados; autenticación inicial validada; catálogo y mesas validados; POS y cocina iniciales validados; caja inicial validada; inventario manual validado; recetas y consumo automático validados; compras y clientes validados; domicilios y analítica validados; reportes XLSX/PDF pasan integración; administración de equipo y cuenta publicadas, CI pendiente. Las funcionalidades de negocio descritas son objetivos de desarrollo.
+> MVP en preparación para piloto. Código de módulos principales, pruebas y preparación de despliegue publicado. No hay despliegue comercial confirmado. Consultar [CI](https://github.com/Nicolas-Castano-Rodas/restaurant-erp/actions) y [hoja de ruta](docs/roadmap.md) para el estado verificado.
 
 ## Visión
 
-Restaurant ERP busca centralizar la operación de restaurantes, desde la toma de pedidos hasta el control de inventario y el análisis de ventas. El primer caso de uso previsto es EL FAMOSO, en Colombia, con una arquitectura reutilizable para otros negocios.
+Centralizar la operación de restaurantes en un espacio de trabajo. Primer caso de uso previsto: EL FAMOSO, Colombia, sin afirmar adopción efectiva. Desarrollado bajo EL IMPERIO — Los Reyes del Software.
 
-## Alcance previsto
+## Funcionalidades del MVP
 
-| Módulo | Objetivo |
+| Área | Funcionalidades implementadas |
 | --- | --- |
-| POS | Pedidos en mesa, para llevar y a domicilio |
-| KDS | Cola de preparación y estados de cocina |
-| Caja | Turnos, pagos, cierres y conciliación |
-| Catálogo | Menús, categorías, variantes y precios |
-| Inventario | Ingredientes, recetas, movimientos y alertas |
-| Compras | Proveedores y recepción de mercancía |
-| Clientes | Historial y gestión de domicilios |
-| Administración | Organizaciones, sucursales, usuarios y permisos |
-| Analítica | Indicadores operativos y comerciales |
-| Facturación | Integración futura con proveedores autorizados |
+| POS y mesas | Pedidos en mesa, para llevar y domicilio, catálogo y variantes |
+| Cocina | Comandas, preparación y entrega a servicio o despacho |
+| Caja | Apertura, cobro registrado, cierre, conciliación y comprobante interno |
+| Inventario | Stock, mínimos, movimientos, recetas y consumo automático |
+| Compras | Proveedores, órdenes y recepción completa |
+| Clientes y domicilios | Registro, historial, asignación de repartidor y estados |
+| Analítica y reportes | Ventas, productos, costos parciales, PDF y Excel |
+| Administración | Organizaciones, sucursales, usuarios, roles y permisos |
+| Seguridad | Sesiones, límites de intentos, actividad personal y bitácora |
 
-## Stack
+Limitaciones: no procesa pagos bancarios, no emite factura electrónica, no calcula utilidad neta contable, no tiene GPS en vivo, MFA ni recuperación de contraseña. No se declara cumplimiento normativo o certificación.
 
-Next.js 16, React 19, TypeScript 5.9, Tailwind CSS 4, Biome, PostgreSQL y Prisma ORM. Zod y shadcn/ui se incorporarán por fases.
+## Arquitectura
 
-## Desarrollo local
+Next.js 16 / React 19 / TypeScript / Tailwind CSS 4 / Biome / PostgreSQL / Prisma ORM. Server Actions y Route Handlers, autorización de servidor, claves compuestas multiempresa y transacciones. ExcelJS y PDF-LIB para exportaciones. Playwright y axe-core para pruebas de navegador.
 
-Requisitos: Git, Node.js 24 y npm.
+## Inicio local
+
+Requisitos: Git, Node.js 24, npm y PostgreSQL. Crear una base dedicada nueva, copiar .env.example a .env y configurar DATABASE_URL de forma privada.
 
 ```bash
 git clone https://github.com/Nicolas-Castano-Rodas/restaurant-erp.git
 cd restaurant-erp
 npm install
-# Configurar .env a partir de .env.example con una base nueva.
-npm run db:validate
-npm run db:generate
 npm run db:deploy
+npm run auth:provision
 npm run dev
 ```
 
-El cliente de Prisma se genera automáticamente después de instalar dependencias y antes de compilar o comprobar tipos. En desarrollo se regenera si falta el cliente o cambia el esquema, la configuración o la versión de Prisma. No requiere una conexión activa para generarlo. Para migrar y usar la aplicación sí debes configurar DATABASE_URL. Si falta el cliente, ejecuta npm run db:generate.
+Visitar http://localhost:3000 y usar la cuenta creada. No existen credenciales predeterminadas. Para una actualización detener el servidor, ejecutar git pull --ff-only origin main, npm install si cambian dependencias, npm run db:deploy si hay nuevas migraciones y npm run dev. No borrar .next de rutina.
 
-Para ingresar a /login, crear el primer propietario mediante el comando interactivo npm run auth:provision siguiendo la guía de autenticación. No requiere variables OWNER_ en .env. No existen credenciales predeterminadas.
-
-Para actualizar: detener Next.js, ejecutar git pull --ff-only origin main, npm install si cambian las dependencias, npm run db:deploy si hay migraciones y npm run dev. No borrar .next de rutina. Solo ante un problema de caché, detener el servidor y ejecutar npm run dev:clean. Si Windows presenta bloqueos de archivos bajo OneDrive, considerar una carpeta local no sincronizada.
-
-Abrir http://localhost:3000. El endpoint /api/health comprueba únicamente la disponibilidad del proceso web; no comprueba la conexión a la base de datos. Consultar la guía de base de datos para configurar PostgreSQL.
+## Calidad y despliegue
 
 ```bash
+npm run ui:contrast
 npm run lint
 npm run typecheck
 npm run build
 ```
 
-El archivo package-lock.json debe generarse mediante npm y guardarse en Git antes de considerar reproducible la instalación. Después se utilizará npm ci.
+Pruebas de integración y E2E únicamente sobre bases desechables. CI comprueba migraciones, servicios, HTTP y navegador. El lockfile revisado debe versionarse antes de utilizar npm ci y construir la imagen de producción. Consultar guías de [pruebas](docs/testing.md), [seguridad](docs/security.md), [rendimiento](docs/performance.md) y [despliegue](docs/deployment.md).
+
+- /api/health: disponibilidad del proceso.
+- /api/ready: conexión simple a PostgreSQL.
+- Demo local: [datos ficticios y recorrido](docs/demo.md).
+- Lanzamiento: [borradores y guiones](docs/launch.md).
 
 ## Documentación
 
-- [Requisitos del producto](docs/product-requirements.md)
-- [Arquitectura técnica](docs/architecture.md)
-- [Hoja de ruta y lanzamiento](docs/roadmap.md)
-- [Sistema de diseño](docs/design-system.md)
-- [Base de datos multiempresa](docs/database.md)
-- [Autenticación y aprovisionamiento inicial](docs/authentication.md)
-- [Catálogo y mesas](docs/catalog.md)
-- [Punto de venta y pedidos](docs/orders.md)
-- [Cocina](docs/kitchen.md)
-- [Caja y pagos](docs/cash.md)
-- [Inventario](docs/inventory.md)
-- [Recetas y consumo](docs/recipes.md)
-- [Compras y proveedores](docs/purchases.md)
-- [Clientes](docs/customers.md)
-- [Domicilios](docs/deliveries.md)
-- [Analítica](docs/analytics.md)
+[Requisitos](docs/product-requirements.md) · [Arquitectura](docs/architecture.md) · [Hoja de ruta](docs/roadmap.md) · [Diseño](docs/design-system.md) · [Base de datos](docs/database.md) · [Autenticación](docs/authentication.md)
+
+[Catálogo](docs/catalog.md) · [POS](docs/orders.md) · [Cocina](docs/kitchen.md) · [Caja](docs/cash.md) · [Inventario](docs/inventory.md) · [Recetas](docs/recipes.md) · [Compras](docs/purchases.md) · [Clientes](docs/customers.md) · [Domicilios](docs/deliveries.md) · [Analítica](docs/analytics.md) · [Reportes](docs/reports.md) · [Equipo](docs/team.md) · [Auditoría](docs/audit.md)
 
 ## English overview
 
-Restaurant ERP is a planned multi-tenant, multi-branch platform for food-service businesses. Its initial scope covers point of sale, kitchen workflows, cash management, inventory and business analytics. The project prioritizes tenant isolation, transactional integrity, accessible interfaces and automated testing. Features will be marked as implemented only after verification.
+Restaurant ERP is a multi-tenant, multi-branch restaurant management MVP being prepared for a pilot. It connects point of sale, kitchen, cash management, inventory and recipes, purchasing, customer and delivery workflows, reporting, and role-based administration. It emphasizes server-side authorization, transactional integrity, historical costs and auditability. The repository includes integration and browser tests, an isolated local demo seed and deployment instructions. Production hosting and acceptance testing are not yet confirmed. Payments are recorded manually; electronic invoicing, live GPS, MFA and password recovery are outside this initial scope.
 
 ## Autoría
 
-**Nicolás Castaño Rodas** — EL IMPERIO · Los Reyes del Software  
+**Nicolás Castaño Rodas** — EL IMPERIO · Los Reyes del Software
+
 [GitHub](https://github.com/Nicolas-Castano-Rodas) · [LinkedIn](https://www.linkedin.com/in/nicolas-castano-rodas-22a09534b/)
 
 © 2026 Nicolás Castaño Rodas. Todos los derechos reservados. No se concede una licencia de uso, distribución o comercialización del código por el hecho de que este repositorio sea público.
-
-
-Reportes empresariales: [documentación](docs/reports.md).
-
-Administración: [usuarios, roles, sucursales y cuenta](docs/team.md).
-
-Auditoría de operaciones: [documentación](docs/audit.md).
-
-Seguridad: [sesiones y encabezados HTTP](docs/security.md).
-
-Rendimiento: [optimización de consultas y paginación](docs/performance.md).
-
-Accesibilidad: `npm run ui:contrast` verifica los pares de color del [sistema de diseño](docs/design-system.md). Las pruebas de navegador y lectores de pantalla siguen pendientes.
-
-Pruebas integrales: [guía de validación y Playwright](docs/testing.md).

@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Restaurant ERP | Gestión gastronómica",
   description:
-    "Plataforma en desarrollo para centralizar las operaciones de restaurantes.",
+    "Plataforma de gestión gastronómica multiempresa y multisucursal, en preparación para piloto.",
 };
 
 export default function RootLayout({

@@ -10,8 +10,8 @@
 | 5 | Cocina, pagos y caja | Cocina, caja y pagos iniciales validados; devoluciones pendientes |
 | 6 | Inventario, recetas y compras | Inventario y recetas validados; compras y recepción completas validadas; devoluciones y compras parciales pendientes |
 | 7 | Clientes, domicilios y analítica | Clientes, domicilios y analítica validados; exportaciones XLSX/PDF pasan integración; corrección de lint publicada |
-| 8 | Auditoría, pruebas, accesibilidad y rendimiento | Administración, auditoría, seguridad y rendimiento validados; corrección responsive y pruebas E2E publicadas, CI pendiente |
-| 9 | Despliegue, demo y materiales de lanzamiento | Pendiente |
+| 8 | Auditoría, pruebas, accesibilidad y rendimiento | Administración, auditoría, seguridad y rendimiento validados; corrección responsive, E2E y preparación para producción publicadas; CI y aceptación pendientes |
+| 9 | Despliegue, demo y materiales de lanzamiento | Configuración, demo local y materiales preparados; despliegue real, capturas y publicación pendientes |
 
 ## Definición de terminado
 Código revisado, lint y tipos correctos, pruebas aplicables superadas, documentación actualizada, sin secretos ni datos personales reales. Las funcionalidades se anuncian como disponibles únicamente después de verificar su funcionamiento.

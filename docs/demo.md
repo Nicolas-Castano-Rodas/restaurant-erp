@@ -1,0 +1,7 @@
+# Demostración aislada (9.2)
+
+Crear exclusivamente una base PostgreSQL local nueva llamada restaurant_erp_demo. En una terminal separada, configurar DATABASE_URL hacia esa base y aplicar npm run db:deploy. Establecer ALLOW_DEMO_SEED=true y DEMO_PASSWORD con una contraseña propia de al menos 12 caracteres mediante variables de entorno seguras. Ejecutar npm run demo:seed; imprime dos correos ficticios únicos (propietario y mesero), nunca la contraseña. El script rechaza otros nombres de base y hosts no locales, no sobrescribe registros existentes y crea una organización independiente por ejecución. Desactivar variables de seed antes de iniciar la app. Ejecutar npm run dev con la conexión demo en esa terminal.
+
+Datos: restaurante ficticio, sucursal, roles, arroz y bebida de ejemplo, receta de 0,5 kg, stock 10 kg, mesa, cliente y domiciliario ficticios. Flujo: entrar como propietario, seleccionar sucursal, crear pedido, avanzar cocina, verificar consumo, cobrar y cerrar caja, exportar reportes y consultar auditoría. Entrar como mesero para verificar acceso limitado.
+
+No usar datos ni credenciales reales en capturas. No publicar contraseñas de propietario ni habilitar una demo pública de escritura sin aislamiento, cuotas y restauración. Una demo alojada exige una base propia, control de acceso y estrategia de reinicio revisada. El script solo está diseñado para preparación local y CI, no para poblar producción.
