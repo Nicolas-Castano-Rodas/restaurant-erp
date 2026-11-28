@@ -1,5 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
+import { databaseConfig } from "./database-config";
 
 const globalForPrisma = globalThis as typeof globalThis & {
   restaurantPrisma?: PrismaClient;
@@ -13,7 +14,7 @@ export function getPrisma(): PrismaClient {
     }
 
     globalForPrisma.restaurantPrisma = new PrismaClient({
-      adapter: new PrismaPg({ connectionString, connectionTimeoutMillis: 5000 }),
+      adapter: new PrismaPg(databaseConfig(connectionString, process.env.DATABASE_CA_CERT)),
     });
   }
 

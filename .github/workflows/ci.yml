@@ -41,6 +41,8 @@ jobs:
           node-version-file: .nvmrc
       - name: Install locked dependencies
         run: npm ci
+      - name: Verify database TLS configuration
+        run: node --import tsx --test tests/unit/database-config.test.ts
       - name: Generate client without database credentials
         run: env -u DATABASE_URL npm run db:generate
       - run: npm run db:validate
