@@ -1,3 +1,4 @@
+import { getCACertificates, rootCertificates } from "node:tls";
 import type { PoolConfig } from "pg";
 
 // A provider CA is optional for local PostgreSQL. On hosted connections use
@@ -20,5 +21,9 @@ export function databaseConfig(connectionString: string, certificate?: string): 
   // pg parses SSL query parameters after the options object. Remove only
   // sslmode so the explicit verified TLS settings are not overwritten.
   url.searchParams.delete("sslmode");
-  return { ...base, connectionString: url.toString(), ssl: { ca, rejectUnauthorized: true } };
+  // An explicit TLS ca replaces Node's trust store. Extend it rather than
+  // dropping the standard roots needed by the provider's pooler.
+  const defaults = typeof getCACertificates === "function" ? getCACertificates("default") : rootCertificates;
+  const trusted = [...new Set([...defaults, ca])];
+  return { ...base, connectionString: url.toString(), ssl: { ca: trusted, rejectUnauthorized: true } };
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { rootCertificates } from "node:tls";
+import { getCACertificates, rootCertificates } from "node:tls";
 import { databaseConfig } from "../../src/lib/database-config";
 
 const local = "postgresql://user:pass@localhost:5432/restaurant_erp_test?schema=public";
@@ -17,7 +17,8 @@ test("explicit CA keeps strict verification and other connection parameters", ()
   assert.equal(url.password, "p%40ss");
   assert.equal(url.searchParams.get("application_name"), "demo");
   assert.equal(url.searchParams.has("sslmode"), false);
-  assert.deepEqual(config.ssl, { ca, rejectUnauthorized: true });
+  const defaults = typeof getCACertificates === "function" ? getCACertificates("default") : rootCertificates;
+  assert.deepEqual(config.ssl, { ca: [...new Set([...defaults, ca])], rejectUnauthorized: true });
 });
 
 test("rejects conflicting SSL options or non-verified mode", () => {
